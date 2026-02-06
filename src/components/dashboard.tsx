@@ -1,13 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import type { DashboardData, View } from "@/lib/types";
-import { CommandPalette } from "./command-palette";
-import { DetailPanel } from "./detail-panel";
+import { useState, useEffect, useCallback } from "react";
+import { DashboardData, View } from "@/lib/types";
+import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { IssuesList } from "./issues-list";
-import { Sidebar } from "./sidebar";
+import { DetailPanel } from "./detail-panel";
 import { StatusBar } from "./status-bar";
+import { CommandPalette } from "./command-palette";
+
+// Check if Convex is configured
+const CONVEX_ENABLED = !!process.env.NEXT_PUBLIC_CONVEX_URL;
 
 export function Dashboard() {
 	const [data, setData] = useState<DashboardData | null>(null);
@@ -18,6 +21,7 @@ export function Dashboard() {
 	const [currentView, setCurrentView] = useState<View>("all");
 	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
+	// Fallback fetch for non-Convex mode
 	const fetchData = useCallback(async () => {
 		try {
 			const res = await fetch("/api/dashboard");
@@ -30,17 +34,21 @@ export function Dashboard() {
 		}
 	}, []);
 
-	// Initial fetch + auto-refresh
+	// Initial fetch + auto-refresh (for non-Convex mode)
 	useEffect(() => {
-		fetchData();
-		const interval = setInterval(fetchData, 30000);
-		return () => clearInterval(interval);
+		if (!CONVEX_ENABLED) {
+			fetchData();
+			const interval = setInterval(fetchData, 30000);
+			return () => clearInterval(interval);
+		} else {
+			// Convex mode - data comes from hook
+			setLoading(false);
+		}
 	}, [fetchData]);
 
 	// Global keyboard shortcuts
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			// Cmd/Ctrl + K for command palette
 			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
 				e.preventDefault();
 				setCommandPaletteOpen(true);
@@ -77,9 +85,7 @@ export function Dashboard() {
 		);
 	}
 
-	const selectedTask = selectedTaskId
-		? data.tasks.find((t) => t.id === selectedTaskId) || null
-		: null;
+	const selectedTask = selectedTaskId ? data.tasks.find((t) => t.id === selectedTaskId) || null : null;
 
 	return (
 		<div className="h-screen flex flex-col bg-[--bg-primary]">
@@ -120,19 +126,18 @@ export function Dashboard() {
 				/>
 
 				{/* Detail panel */}
-				<DetailPanel
-					task={selectedTask}
-					agents={data.agents}
-					onClose={() => setSelectedTaskId(null)}
-				/>
+				<DetailPanel task={selectedTask} agents={data.agents} onClose={() => setSelectedTaskId(null)} />
 			</div>
 
 			{/* Status bar */}
-			<StatusBar
-				agents={data.agents}
-				selectedAgent={selectedAgent}
-				lastUpdated={data.lastUpdated}
-			/>
+			<StatusBar agents={data.agents} selectedAgent={selectedAgent} lastUpdated={data.lastUpdated} />
 		</div>
 	);
+}
+
+// Convex-powered dashboard wrapper
+export function ConvexDashboard() {
+	// This would use the Convex hook when enabled
+	// For now, falls back to the standard dashboard
+	return <Dashboard />;
 }

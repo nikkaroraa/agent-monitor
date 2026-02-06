@@ -69,6 +69,7 @@ const AGENTS: Agent[] = [
 
 const TASKS_PATH = "/Users/claw/.openclaw/shared/tasks.json";
 const MESSAGES_PATH = "/Users/claw/.openclaw/shared/messages.json";
+const BEADS_PATH = "/Users/claw/.openclaw/agents/.beads/issues.jsonl";
 
 function readJsonFile<T>(filePath: string, defaultValue: T): T {
 	try {
@@ -80,6 +81,78 @@ function readJsonFile<T>(filePath: string, defaultValue: T): T {
 		console.error(`Error reading ${filePath}:`, error);
 	}
 	return defaultValue;
+}
+
+// Beads issue format
+interface BeadsIssue {
+	id: string;
+	title: string;
+	description?: string;
+	status: string;
+	priority: number;
+	issue_type: string;
+	created_at: string;
+	created_by: string;
+	updated_at: string;
+	labels?: string[];
+	assignee?: string;
+}
+
+function readBeadsIssues(): BeadsIssue[] {
+	try {
+		if (existsSync(BEADS_PATH)) {
+			const content = readFileSync(BEADS_PATH, "utf-8");
+			const lines = content.trim().split("\n").filter(Boolean);
+			return lines.map((line) => JSON.parse(line));
+		}
+	} catch (error) {
+		console.error("Error reading Beads issues:", error);
+	}
+	return [];
+}
+
+// Map Beads status to Linear-style
+function mapBeadsStatus(status: string): Task["status"] {
+	const mapping: Record<string, Task["status"]> = {
+		open: "todo",
+		in_progress: "in-progress",
+		done: "done",
+		closed: "done",
+		blocked: "backlog",
+	};
+	return mapping[status] || "backlog";
+}
+
+// Map Beads priority (1-5) to Linear-style
+function mapBeadsPriority(priority: number): Task["priority"] {
+	if (priority === 1) return "urgent";
+	if (priority === 2) return "high";
+	if (priority === 3) return "medium";
+	if (priority === 4) return "low";
+	return "none";
+}
+
+// Convert Beads issue to Task
+function beadsToTask(issue: BeadsIssue): Task {
+	// Try to infer assignee from labels
+	let assignee = issue.assignee || "";
+	if (!assignee && issue.labels) {
+		// Check if any label matches an agent name
+		const agentLabels = ["main", "builder", "trader", "watcher", "director", "analyst", "job-hunt", "clawink", "kat"];
+		assignee = issue.labels.find((l) => agentLabels.includes(l)) || "";
+	}
+
+	return {
+		id: issue.id,
+		title: issue.title,
+		description: issue.description,
+		assignee: assignee || "unassigned",
+		status: mapBeadsStatus(issue.status),
+		priority: mapBeadsPriority(issue.priority),
+		createdBy: issue.created_by,
+		createdAt: issue.created_at,
+		notes: issue.labels,
+	};
 }
 
 // Map old status values to new Linear-style ones
@@ -104,7 +177,7 @@ function mapPriority(priority: string): Task["priority"] {
 }
 
 export function getDashboardData(): DashboardData {
-	// Read tasks
+	// Read legacy tasks
 	const tasksData = readJsonFile<{ tasks: Array<Record<string, unknown>> }>(TASKS_PATH, {
 		tasks: [],
 	});
@@ -114,8 +187,11 @@ export function getDashboardData(): DashboardData {
 		messages: [],
 	});
 
-	// Transform tasks to new format
-	const tasks: Task[] = (tasksData.tasks || []).map((t) => ({
+	// Read Beads issues
+	const beadsIssues = readBeadsIssues();
+
+	// Transform legacy tasks
+	const legacyTasks: Task[] = (tasksData.tasks || []).map((t) => ({
 		id: String(t.id || ""),
 		title: String(t.title || ""),
 		description: t.description ? String(t.description) : undefined,
@@ -128,6 +204,19 @@ export function getDashboardData(): DashboardData {
 		completedAt: t.completedAt ? String(t.completedAt) : undefined,
 		notes: Array.isArray(t.notes) ? t.notes.map(String) : undefined,
 	}));
+
+	// Convert Beads issues to tasks
+	const beadsTasks: Task[] = beadsIssues.map(beadsToTask);
+
+	// Merge: Beads tasks first (newer system), then legacy
+	// Dedupe by ID
+	const taskMap = new Map<string, Task>();
+	for (const task of [...beadsTasks, ...legacyTasks]) {
+		if (!taskMap.has(task.id)) {
+			taskMap.set(task.id, task);
+		}
+	}
+	const tasks = Array.from(taskMap.values());
 
 	// Enrich agents with task info
 	const enrichedAgents = AGENTS.map((agent) => {

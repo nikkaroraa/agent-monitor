@@ -17,8 +17,8 @@ export interface Task {
   title: string;
   description?: string;
   assignee: string;
-  status: "todo" | "in-progress" | "done" | "blocked";
-  priority: "low" | "medium" | "high";
+  status: "backlog" | "todo" | "in-progress" | "done" | "canceled";
+  priority: "urgent" | "high" | "medium" | "low" | "none";
   createdBy: string;
   createdAt: string;
   claimedAt?: string;
@@ -41,3 +41,5 @@ export interface DashboardData {
   messages: Message[];
   lastUpdated: string;
 }
+
+export type View = "all" | "my-issues" | "active" | "backlog";

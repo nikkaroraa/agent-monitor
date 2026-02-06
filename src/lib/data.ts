@@ -28,16 +28,52 @@ function readJsonFile<T>(filePath: string, defaultValue: T): T {
   return defaultValue;
 }
 
+// Map old status values to new Linear-style ones
+function mapStatus(status: string): Task["status"] {
+  const mapping: Record<string, Task["status"]> = {
+    "todo": "todo",
+    "in-progress": "in-progress",
+    "done": "done",
+    "blocked": "backlog",
+  };
+  return mapping[status] || "backlog";
+}
+
+// Map old priority to new
+function mapPriority(priority: string): Task["priority"] {
+  const mapping: Record<string, Task["priority"]> = {
+    "high": "high",
+    "medium": "medium",
+    "low": "low",
+  };
+  return mapping[priority] || "none";
+}
+
 export function getDashboardData(): DashboardData {
   // Read tasks
-  const tasksData = readJsonFile<{ tasks: Task[] }>(TASKS_PATH, { tasks: [] });
+  const tasksData = readJsonFile<{ tasks: Array<Record<string, unknown>> }>(TASKS_PATH, { tasks: [] });
   
   // Read messages
   const messagesData = readJsonFile<{ messages: Message[] }>(MESSAGES_PATH, { messages: [] });
   
+  // Transform tasks to new format
+  const tasks: Task[] = (tasksData.tasks || []).map(t => ({
+    id: String(t.id || ""),
+    title: String(t.title || ""),
+    description: t.description ? String(t.description) : undefined,
+    assignee: String(t.assignee || ""),
+    status: mapStatus(String(t.status || "")),
+    priority: mapPriority(String(t.priority || "")),
+    createdBy: String(t.createdBy || ""),
+    createdAt: String(t.createdAt || ""),
+    claimedAt: t.claimedAt ? String(t.claimedAt) : undefined,
+    completedAt: t.completedAt ? String(t.completedAt) : undefined,
+    notes: Array.isArray(t.notes) ? t.notes.map(String) : undefined,
+  }));
+
   // Enrich agents with task info
   const enrichedAgents = AGENTS.map(agent => {
-    const agentTasks = tasksData.tasks.filter(t => t.assignee === agent.id);
+    const agentTasks = tasks.filter(t => t.assignee === agent.id);
     const inProgress = agentTasks.find(t => t.status === "in-progress");
     const recentDone = agentTasks
       .filter(t => t.status === "done" && t.completedAt)
@@ -53,8 +89,12 @@ export function getDashboardData(): DashboardData {
 
   return {
     agents: enrichedAgents,
-    tasks: tasksData.tasks || [],
+    tasks,
     messages: messagesData.messages || [],
     lastUpdated: new Date().toISOString(),
   };
+}
+
+export function getAgentById(id: string): Agent | undefined {
+  return AGENTS.find(a => a.id === id);
 }

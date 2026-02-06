@@ -51,39 +51,39 @@ export function TaskRow({ task, selected, onSelect }: TaskRowProps) {
 			transition={{ duration: 0.15 }}
 			onClick={onSelect}
 			className={cn(
-				"group flex items-center gap-3 px-4 py-2 border-b border-[--border-subtle] cursor-pointer transition-colors",
+				"group flex items-center gap-2 md:gap-3 px-2 md:px-4 py-2 md:py-2 border-b border-[--border-subtle] cursor-pointer transition-colors",
 				selected ? "bg-[--accent]/10" : "hover:bg-[--bg-hover]",
 			)}
 		>
 			{/* Status */}
 			<button
-				className={cn("w-5 h-5 flex items-center justify-center text-sm", status.color)}
+				className={cn("w-4 md:w-5 h-4 md:h-5 flex items-center justify-center text-xs md:text-sm flex-shrink-0", status.color)}
 				title={status.label}
 			>
 				{status.icon}
 			</button>
 
-			{/* Priority */}
-			<span className={cn("w-4 text-xs", priority.color)} title={task.priority}>
+			{/* Priority - hide on smallest screens */}
+			<span className={cn("w-3 md:w-4 text-[10px] md:text-xs hidden xs:block flex-shrink-0", priority.color)} title={task.priority}>
 				{priority.icon}
 			</span>
 
 			{/* Title */}
-			<span className="flex-1 truncate text-sm text-[--text-primary]">{task.title}</span>
+			<span className="flex-1 truncate text-xs md:text-sm text-[--text-primary] min-w-0">{task.title}</span>
 
-			{/* Assignee */}
+			{/* Assignee - emoji only on mobile */}
 			<div
-				className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[--bg-tertiary] text-xs text-[--text-secondary]"
+				className="flex items-center gap-1 md:gap-1.5 px-1.5 md:px-2 py-0.5 rounded bg-[--bg-tertiary] text-[10px] md:text-xs text-[--text-secondary] flex-shrink-0"
 				title={task.assignee}
 			>
-				<span>{agentEmojis[task.assignee] || "👤"}</span>
-				<span className="hidden sm:inline capitalize">{task.assignee}</span>
+				<span className="text-xs md:text-sm">{agentEmojis[task.assignee] || "👤"}</span>
+				<span className="hidden md:inline capitalize">{task.assignee}</span>
 			</div>
 
-			{/* Status pill */}
+			{/* Status pill - short on mobile */}
 			<span
 				className={cn(
-					"px-2 py-0.5 rounded text-[11px] font-medium",
+					"px-1.5 md:px-2 py-0.5 rounded text-[9px] md:text-[11px] font-medium flex-shrink-0 hidden sm:block",
 					task.status === "done" && "bg-green-500/20 text-green-400",
 					task.status === "in-progress" && "bg-yellow-500/20 text-yellow-400",
 					task.status === "todo" && "bg-zinc-500/20 text-zinc-400",
@@ -94,8 +94,8 @@ export function TaskRow({ task, selected, onSelect }: TaskRowProps) {
 				{status.label}
 			</span>
 
-			{/* Keyboard hint on hover */}
-			<span className="hidden group-hover:inline text-[10px] text-[--text-tertiary] kbd">↵</span>
+			{/* Keyboard hint on hover - desktop only */}
+			<span className="hidden md:group-hover:inline text-[10px] text-[--text-tertiary] kbd">↵</span>
 		</motion.div>
 	);
 }

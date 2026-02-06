@@ -16,6 +16,7 @@ export function Dashboard() {
 	const [data, setData] = useState<DashboardData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 	const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 	const [currentView, setCurrentView] = useState<View>("all");
@@ -101,20 +102,44 @@ export function Dashboard() {
 			/>
 
 			{/* Header */}
-			<Header onOpenCommandPalette={() => setCommandPaletteOpen(true)} onRefresh={fetchData} />
+			<Header 
+				onOpenCommandPalette={() => setCommandPaletteOpen(true)} 
+				onRefresh={fetchData}
+				onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+				mobileMenuOpen={mobileMenuOpen}
+			/>
 
 			{/* Main content */}
-			<div className="flex-1 flex overflow-hidden">
-				{/* Sidebar */}
-				<Sidebar
-					agents={data.agents}
-					selectedAgent={selectedAgent}
-					onSelectAgent={setSelectedAgent}
-					currentView={currentView}
-					onChangeView={setCurrentView}
-					collapsed={sidebarCollapsed}
-					onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-				/>
+			<div className="flex-1 flex overflow-hidden relative">
+				{/* Mobile sidebar overlay */}
+				{mobileMenuOpen && (
+					<div 
+						className="fixed inset-0 bg-black/50 z-40 md:hidden"
+						onClick={() => setMobileMenuOpen(false)}
+					/>
+				)}
+
+				{/* Sidebar - hidden on mobile unless menu open */}
+				<div className={`
+					fixed md:relative inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-out
+					${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+				`}>
+					<Sidebar
+						agents={data.agents}
+						selectedAgent={selectedAgent}
+						onSelectAgent={(id) => {
+							setSelectedAgent(id);
+							setMobileMenuOpen(false);
+						}}
+						currentView={currentView}
+						onChangeView={(view) => {
+							setCurrentView(view);
+							setMobileMenuOpen(false);
+						}}
+						collapsed={sidebarCollapsed}
+						onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+					/>
+				</div>
 
 				{/* Issues list */}
 				<IssuesList
@@ -126,7 +151,11 @@ export function Dashboard() {
 				/>
 
 				{/* Detail panel */}
-				<DetailPanel task={selectedTask} agents={data.agents} onClose={() => setSelectedTaskId(null)} />
+				<DetailPanel 
+					task={selectedTask} 
+					agents={data.agents} 
+					onClose={() => setSelectedTaskId(null)} 
+				/>
 			</div>
 
 			{/* Status bar */}

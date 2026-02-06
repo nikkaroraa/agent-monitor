@@ -90,16 +90,16 @@ export function IssuesList({
 	}, []);
 
 	return (
-		<div className="flex-1 flex flex-col overflow-hidden">
+		<div className="flex-1 flex flex-col overflow-hidden min-w-0">
 			{/* Header */}
-			<div className="flex items-center justify-between px-4 py-3 border-b border-[--border]">
-				<h2 className="font-semibold text-[--text-primary]">
+			<div className="flex items-center justify-between px-2 md:px-4 py-2 md:py-3 border-b border-[--border]">
+				<h2 className="font-semibold text-sm md:text-base text-[--text-primary]">
 					Issues
-					<span className="ml-2 text-sm text-[--text-tertiary]">{filteredTasks.length}</span>
+					<span className="ml-1.5 md:ml-2 text-xs md:text-sm text-[--text-tertiary]">{filteredTasks.length}</span>
 				</h2>
 
 				{/* Keyboard hints */}
-				<div className="hidden sm:flex items-center gap-3 text-[11px] text-[--text-tertiary]">
+				<div className="hidden md:flex items-center gap-3 text-[11px] text-[--text-tertiary]">
 					<span>
 						<span className="kbd">j</span>
 						<span className="kbd ml-0.5">k</span> Navigate
@@ -110,8 +110,8 @@ export function IssuesList({
 				</div>
 			</div>
 
-			{/* Status tabs */}
-			<div className="flex items-center gap-1 px-4 py-2 border-b border-[--border] bg-[--bg-secondary]">
+			{/* Status tabs - horizontal scroll on mobile */}
+			<div className="flex items-center gap-1 px-2 md:px-4 py-1.5 md:py-2 border-b border-[--border] bg-[--bg-secondary] overflow-x-auto scrollbar-hide">
 				{STATUS_TABS.map((tab) => {
 					const count =
 						tab.id === "all"
@@ -125,14 +125,14 @@ export function IssuesList({
 							key={tab.id}
 							onClick={() => setStatusFilter(tab.id)}
 							className={cn(
-								"px-3 py-1.5 rounded text-sm transition-colors",
+								"px-2 md:px-3 py-1 md:py-1.5 rounded text-xs md:text-sm transition-colors whitespace-nowrap flex-shrink-0",
 								statusFilter === tab.id
 									? "bg-[--bg-tertiary] text-white"
 									: "text-[--text-secondary] hover:text-white hover:bg-[--bg-hover]",
 							)}
 						>
 							{tab.label}
-							<span className="ml-1.5 text-[--text-tertiary]">{count}</span>
+							<span className="ml-1 md:ml-1.5 text-[--text-tertiary]">{count}</span>
 						</button>
 					);
 				})}

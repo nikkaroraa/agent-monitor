@@ -5,20 +5,20 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Agent Monitor | OpenClaw Control Center",
-  description: "Real-time monitoring dashboard for the multi-agent system",
+	title: "Agent Monitor | OpenClaw Control Center",
+	description: "Real-time monitoring dashboard for the multi-agent system",
 };
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-zinc-950 text-zinc-100 min-h-screen`}>
-        {children}
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en" className="dark">
+			<body className={`${inter.className} bg-zinc-950 text-zinc-100 min-h-screen`}>
+				{children}
+			</body>
+		</html>
+	);
 }

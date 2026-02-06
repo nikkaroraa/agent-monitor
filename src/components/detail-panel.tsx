@@ -1,179 +1,191 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Task, Agent } from "@/lib/types";
+import { AnimatePresence, motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
+import type { Agent, Task } from "@/lib/types";
 
 interface DetailPanelProps {
-  task: Task | null;
-  agents: Agent[];
-  onClose: () => void;
+	task: Task | null;
+	agents: Agent[];
+	onClose: () => void;
 }
 
 const statusConfig: Record<Task["status"], { label: string; color: string }> = {
-  backlog: { label: "Backlog", color: "bg-zinc-600" },
-  todo: { label: "Todo", color: "bg-zinc-500" },
-  "in-progress": { label: "In Progress", color: "bg-yellow-500" },
-  done: { label: "Done", color: "bg-green-500" },
-  canceled: { label: "Canceled", color: "bg-red-500" },
+	backlog: { label: "Backlog", color: "bg-zinc-600" },
+	todo: { label: "Todo", color: "bg-zinc-500" },
+	"in-progress": { label: "In Progress", color: "bg-yellow-500" },
+	done: { label: "Done", color: "bg-green-500" },
+	canceled: { label: "Canceled", color: "bg-red-500" },
 };
 
 const priorityConfig: Record<Task["priority"], { icon: string; label: string; color: string }> = {
-  urgent: { icon: "⚡", label: "Urgent", color: "text-orange-500" },
-  high: { icon: "▲", label: "High", color: "text-red-500" },
-  medium: { icon: "◆", label: "Medium", color: "text-yellow-500" },
-  low: { icon: "▼", label: "Low", color: "text-blue-500" },
-  none: { icon: "−", label: "No priority", color: "text-[--text-tertiary]" },
+	urgent: { icon: "⚡", label: "Urgent", color: "text-orange-500" },
+	high: { icon: "▲", label: "High", color: "text-red-500" },
+	medium: { icon: "◆", label: "Medium", color: "text-yellow-500" },
+	low: { icon: "▼", label: "Low", color: "text-blue-500" },
+	none: { icon: "−", label: "No priority", color: "text-[--text-tertiary]" },
 };
 
 const agentEmojis: Record<string, string> = {
-  main: "🧠",
-  builder: "🔨",
-  trader: "📈",
-  watcher: "👁️",
-  director: "🎬",
-  analyst: "📊",
-  "job-hunt": "💼",
-  clawink: "✍️",
-  kat: "🐱",
+	main: "🧠",
+	builder: "🔨",
+	trader: "📈",
+	watcher: "👁️",
+	director: "🎬",
+	analyst: "📊",
+	"job-hunt": "💼",
+	clawink: "✍️",
+	kat: "🐱",
 };
 
 export function DetailPanel({ task, agents, onClose }: DetailPanelProps) {
-  const agent = agents.find(a => a.id === task?.assignee);
-  
-  return (
-    <AnimatePresence>
-      {task && (
-        <motion.div
-          initial={{ x: "100%", opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: "100%", opacity: 0 }}
-          transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          className="w-96 h-full border-l border-[--border] bg-[--bg-secondary] flex flex-col"
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[--border]">
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${statusConfig[task.status].color}`} />
-              <span className="text-sm text-[--text-secondary]">{task.id}</span>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-[--bg-hover] rounded transition-colors text-[--text-secondary]"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </button>
-          </div>
+	const agent = agents.find((a) => a.id === task?.assignee);
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            {/* Title */}
-            <h2 className="text-lg font-semibold text-[--text-primary]">
-              {task.title}
-            </h2>
+	return (
+		<AnimatePresence>
+			{task && (
+				<motion.div
+					initial={{ x: "100%", opacity: 0 }}
+					animate={{ x: 0, opacity: 1 }}
+					exit={{ x: "100%", opacity: 0 }}
+					transition={{ type: "spring", damping: 30, stiffness: 300 }}
+					className="w-96 h-full border-l border-[--border] bg-[--bg-secondary] flex flex-col"
+				>
+					{/* Header */}
+					<div className="flex items-center justify-between px-4 py-3 border-b border-[--border]">
+						<div className="flex items-center gap-2">
+							<span className={`w-2 h-2 rounded-full ${statusConfig[task.status].color}`} />
+							<span className="text-sm text-[--text-secondary]">{task.id}</span>
+						</div>
+						<button
+							onClick={onClose}
+							className="p-1.5 hover:bg-[--bg-hover] rounded transition-colors text-[--text-secondary]"
+						>
+							<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+								<path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" />
+							</svg>
+						</button>
+					</div>
 
-            {/* Description */}
-            {task.description && (
-              <p className="text-sm text-[--text-secondary] leading-relaxed">
-                {task.description}
-              </p>
-            )}
+					{/* Content */}
+					<div className="flex-1 overflow-y-auto p-4 space-y-6">
+						{/* Title */}
+						<h2 className="text-lg font-semibold text-[--text-primary]">{task.title}</h2>
 
-            <Separator className="bg-[--border]" />
+						{/* Description */}
+						{task.description && (
+							<p className="text-sm text-[--text-secondary] leading-relaxed">{task.description}</p>
+						)}
 
-            {/* Properties */}
-            <div className="space-y-4">
-              {/* Status */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[--text-tertiary]">Status</span>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  task.status === "done" ? "bg-green-500/20 text-green-400" :
-                  task.status === "in-progress" ? "bg-yellow-500/20 text-yellow-400" :
-                  "bg-zinc-500/20 text-zinc-400"
-                }`}>
-                  {statusConfig[task.status].label}
-                </span>
-              </div>
+						<Separator className="bg-[--border]" />
 
-              {/* Priority */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[--text-tertiary]">Priority</span>
-                <span className={`flex items-center gap-1.5 text-sm ${priorityConfig[task.priority].color}`}>
-                  {priorityConfig[task.priority].icon}
-                  {priorityConfig[task.priority].label}
-                </span>
-              </div>
+						{/* Properties */}
+						<div className="space-y-4">
+							{/* Status */}
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-[--text-tertiary]">Status</span>
+								<span
+									className={`px-2 py-1 rounded text-xs font-medium ${
+										task.status === "done"
+											? "bg-green-500/20 text-green-400"
+											: task.status === "in-progress"
+												? "bg-yellow-500/20 text-yellow-400"
+												: "bg-zinc-500/20 text-zinc-400"
+									}`}
+								>
+									{statusConfig[task.status].label}
+								</span>
+							</div>
 
-              {/* Assignee */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[--text-tertiary]">Assignee</span>
-                <div className="flex items-center gap-2">
-                  <span>{agentEmojis[task.assignee] || "👤"}</span>
-                  <span className="text-sm text-[--text-primary] capitalize">{task.assignee}</span>
-                  {agent && (
-                    <span className={`w-2 h-2 rounded-full ${
-                      agent.status === "active" ? "bg-green-500" :
-                      agent.status === "error" ? "bg-red-500" : "bg-yellow-500"
-                    }`} />
-                  )}
-                </div>
-              </div>
+							{/* Priority */}
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-[--text-tertiary]">Priority</span>
+								<span
+									className={`flex items-center gap-1.5 text-sm ${priorityConfig[task.priority].color}`}
+								>
+									{priorityConfig[task.priority].icon}
+									{priorityConfig[task.priority].label}
+								</span>
+							</div>
 
-              {/* Created by */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[--text-tertiary]">Created by</span>
-                <span className="text-sm text-[--text-secondary] capitalize">{task.createdBy}</span>
-              </div>
+							{/* Assignee */}
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-[--text-tertiary]">Assignee</span>
+								<div className="flex items-center gap-2">
+									<span>{agentEmojis[task.assignee] || "👤"}</span>
+									<span className="text-sm text-[--text-primary] capitalize">{task.assignee}</span>
+									{agent && (
+										<span
+											className={`w-2 h-2 rounded-full ${
+												agent.status === "active"
+													? "bg-green-500"
+													: agent.status === "error"
+														? "bg-red-500"
+														: "bg-yellow-500"
+											}`}
+										/>
+									)}
+								</div>
+							</div>
 
-              {/* Dates */}
-              {task.createdAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-[--text-tertiary]">Created</span>
-                  <span className="text-sm text-[--text-secondary]">
-                    {new Date(task.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
+							{/* Created by */}
+							<div className="flex items-center justify-between">
+								<span className="text-sm text-[--text-tertiary]">Created by</span>
+								<span className="text-sm text-[--text-secondary] capitalize">{task.createdBy}</span>
+							</div>
 
-              {task.completedAt && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-[--text-tertiary]">Completed</span>
-                  <span className="text-sm text-[--text-secondary]">
-                    {new Date(task.completedAt).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-            </div>
+							{/* Dates */}
+							{task.createdAt && (
+								<div className="flex items-center justify-between">
+									<span className="text-sm text-[--text-tertiary]">Created</span>
+									<span className="text-sm text-[--text-secondary]">
+										{new Date(task.createdAt).toLocaleDateString()}
+									</span>
+								</div>
+							)}
 
-            {/* Notes */}
-            {task.notes && task.notes.length > 0 && (
-              <>
-                <Separator className="bg-[--border]" />
-                <div>
-                  <h3 className="text-sm font-medium text-[--text-primary] mb-2">Notes</h3>
-                  <ul className="space-y-1.5">
-                    {task.notes.map((note, i) => (
-                      <li key={i} className="text-sm text-[--text-secondary] flex items-start gap-2">
-                        <span className="text-[--text-tertiary]">•</span>
-                        {note}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
-          </div>
+							{task.completedAt && (
+								<div className="flex items-center justify-between">
+									<span className="text-sm text-[--text-tertiary]">Completed</span>
+									<span className="text-sm text-[--text-secondary]">
+										{new Date(task.completedAt).toLocaleDateString()}
+									</span>
+								</div>
+							)}
+						</div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-[--border]">
-            <div className="flex items-center gap-2 text-[11px] text-[--text-tertiary]">
-              <span><span className="kbd">Esc</span> Close</span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+						{/* Notes */}
+						{task.notes && task.notes.length > 0 && (
+							<>
+								<Separator className="bg-[--border]" />
+								<div>
+									<h3 className="text-sm font-medium text-[--text-primary] mb-2">Notes</h3>
+									<ul className="space-y-1.5">
+										{task.notes.map((note, i) => (
+											<li
+												key={i}
+												className="text-sm text-[--text-secondary] flex items-start gap-2"
+											>
+												<span className="text-[--text-tertiary]">•</span>
+												{note}
+											</li>
+										))}
+									</ul>
+								</div>
+							</>
+						)}
+					</div>
+
+					{/* Footer */}
+					<div className="p-4 border-t border-[--border]">
+						<div className="flex items-center gap-2 text-[11px] text-[--text-tertiary]">
+							<span>
+								<span className="kbd">Esc</span> Close
+							</span>
+						</div>
+					</div>
+				</motion.div>
+			)}
+		</AnimatePresence>
+	);
 }

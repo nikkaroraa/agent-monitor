@@ -3,11 +3,19 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/convex-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+	subsets: ["latin"],
+	display: "swap",
+	variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
-	title: "Agent Monitor | OpenClaw Control Center",
+	title: "Mission Control | Agent Monitor",
 	description: "Real-time monitoring dashboard for the multi-agent system",
+};
+
+export const viewport = {
+	themeColor: "#0a0a0f",
 };
 
 export default function RootLayout({
@@ -17,7 +25,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" className="dark">
-			<body className={`${inter.className} bg-zinc-950 text-zinc-100 min-h-screen`}>
+			<body className={`${inter.className} ${inter.variable} antialiased`}>
 				<ConvexClientProvider>{children}</ConvexClientProvider>
 			</body>
 		</html>

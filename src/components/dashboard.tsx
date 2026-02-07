@@ -10,7 +10,8 @@ import { StatusBar } from "./status-bar";
 import { CommandPalette } from "./command-palette";
 
 // Check if Convex is configured
-const CONVEX_ENABLED = !!process.env.NEXT_PUBLIC_CONVEX_URL;
+// TODO: Wire up Convex queries properly - using API mode for now
+const CONVEX_ENABLED = false; // !!process.env.NEXT_PUBLIC_CONVEX_URL;
 
 export function Dashboard() {
 	const [data, setData] = useState<DashboardData | null>(null);
@@ -63,24 +64,33 @@ export function Dashboard() {
 	if (loading || !data) {
 		return (
 			<div className="h-screen flex items-center justify-center bg-[--bg-primary]">
-				<div className="flex items-center gap-3 text-[--text-secondary]">
-					<svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-						<circle
-							className="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							strokeWidth="4"
-							fill="none"
-						/>
-						<path
-							className="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-						/>
-					</svg>
-					Loading...
+				<div className="flex flex-col items-center gap-4">
+					{/* Animated logo */}
+					<div className="relative">
+						<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[--accent] to-purple-600 flex items-center justify-center animate-pulse">
+							<span className="text-xl font-bold text-white">M</span>
+						</div>
+						<div className="absolute inset-0 rounded-xl bg-[--accent] blur-xl opacity-30 animate-pulse" />
+					</div>
+					<div className="flex items-center gap-2 text-[--text-secondary]">
+						<svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+							<circle
+								className="opacity-25"
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								strokeWidth="3"
+								fill="none"
+							/>
+							<path
+								className="opacity-75"
+								fill="currentColor"
+								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+							/>
+						</svg>
+						<span className="text-sm">Loading Mission Control...</span>
+					</div>
 				</div>
 			</div>
 		);
@@ -89,7 +99,7 @@ export function Dashboard() {
 	const selectedTask = selectedTaskId ? data.tasks.find((t) => t.id === selectedTaskId) || null : null;
 
 	return (
-		<div className="h-screen flex flex-col bg-[--bg-primary]">
+		<div className="h-screen flex flex-col bg-[--bg-primary] overflow-hidden">
 			{/* Command Palette */}
 			<CommandPalette
 				open={commandPaletteOpen}
@@ -114,7 +124,7 @@ export function Dashboard() {
 				{/* Mobile sidebar overlay */}
 				{mobileMenuOpen && (
 					<div 
-						className="fixed inset-0 bg-black/50 z-40 md:hidden"
+						className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
 						onClick={() => setMobileMenuOpen(false)}
 					/>
 				)}

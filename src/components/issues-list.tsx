@@ -15,11 +15,11 @@ interface IssuesListProps {
 }
 
 const STATUS_TABS = [
-	{ id: "all", label: "All" },
-	{ id: "backlog", label: "Backlog" },
-	{ id: "todo", label: "Todo" },
-	{ id: "in-progress", label: "In Progress" },
-	{ id: "done", label: "Done" },
+	{ id: "all", label: "All", icon: "⊞" },
+	{ id: "backlog", label: "Backlog", icon: "○" },
+	{ id: "todo", label: "Todo", icon: "◇" },
+	{ id: "in-progress", label: "In Progress", icon: "◐" },
+	{ id: "done", label: "Done", icon: "●" },
 ] as const;
 
 type StatusFilter = (typeof STATUS_TABS)[number]["id"];
@@ -90,28 +90,32 @@ export function IssuesList({
 	}, []);
 
 	return (
-		<div className="flex-1 flex flex-col overflow-hidden min-w-0">
+		<div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-[--bg-primary]">
 			{/* Header */}
-			<div className="flex items-center justify-between px-2 md:px-4 py-2 md:py-3 border-b border-[--border]">
-				<h2 className="font-semibold text-sm md:text-base text-[--text-primary]">
-					Issues
-					<span className="ml-1.5 md:ml-2 text-xs md:text-sm text-[--text-tertiary]">{filteredTasks.length}</span>
-				</h2>
-
-				{/* Keyboard hints */}
-				<div className="hidden md:flex items-center gap-3 text-[11px] text-[--text-tertiary]">
-					<span>
-						<span className="kbd">j</span>
-						<span className="kbd ml-0.5">k</span> Navigate
+			<div className="flex items-center justify-between px-3 md:px-4 py-3 border-b border-[--border]">
+				<div className="flex items-center gap-3">
+					<h2 className="font-semibold text-[--text-primary]">Issues</h2>
+					<span className="px-2 py-0.5 rounded-full bg-[--bg-tertiary] text-xs text-[--text-tertiary] font-medium">
+						{filteredTasks.length}
 					</span>
-					<span>
-						<span className="kbd">↵</span> Open
+				</div>
+
+				{/* Keyboard hints - desktop */}
+				<div className="hidden md:flex items-center gap-4 text-[11px] text-[--text-quaternary]">
+					<span className="flex items-center gap-1.5">
+						<span className="kbd">J</span>
+						<span className="kbd">K</span>
+						<span className="ml-0.5">Navigate</span>
+					</span>
+					<span className="flex items-center gap-1.5">
+						<span className="kbd">↵</span>
+						<span className="ml-0.5">Open</span>
 					</span>
 				</div>
 			</div>
 
-			{/* Status tabs - horizontal scroll on mobile */}
-			<div className="flex items-center gap-1 px-2 md:px-4 py-1.5 md:py-2 border-b border-[--border] bg-[--bg-secondary] overflow-x-auto scrollbar-hide">
+			{/* Status tabs */}
+			<div className="flex items-center gap-1 px-3 md:px-4 py-2 border-b border-[--border] bg-[--bg-secondary] overflow-x-auto scrollbar-hide">
 				{STATUS_TABS.map((tab) => {
 					const count =
 						tab.id === "all"
@@ -120,19 +124,36 @@ export function IssuesList({
 									(t) => t.status === tab.id && (!selectedAgent || t.assignee === selectedAgent),
 								).length;
 
+					const isActive = statusFilter === tab.id;
+
 					return (
 						<button
 							key={tab.id}
 							onClick={() => setStatusFilter(tab.id)}
 							className={cn(
-								"px-2 md:px-3 py-1 md:py-1.5 rounded text-xs md:text-sm transition-colors whitespace-nowrap flex-shrink-0",
-								statusFilter === tab.id
-									? "bg-[--bg-tertiary] text-white"
-									: "text-[--text-secondary] hover:text-white hover:bg-[--bg-hover]",
+								"relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all duration-150 whitespace-nowrap flex-shrink-0",
+								isActive
+									? "text-[--text-primary] font-medium"
+									: "text-[--text-tertiary] hover:text-[--text-secondary] hover:bg-[--bg-hover]",
 							)}
 						>
-							{tab.label}
-							<span className="ml-1 md:ml-1.5 text-[--text-tertiary]">{count}</span>
+							{isActive && (
+								<motion.div
+									layoutId="activeTab"
+									className="absolute inset-0 bg-[--bg-active] rounded-lg"
+									transition={{ type: "spring", duration: 0.3, bounce: 0.15 }}
+								/>
+							)}
+							<span className="relative z-10 flex items-center gap-1.5">
+								<span className="text-xs opacity-60">{tab.icon}</span>
+								<span>{tab.label}</span>
+								<span className={cn(
+									"text-xs transition-colors",
+									isActive ? "text-[--text-secondary]" : "text-[--text-quaternary]"
+								)}>
+									{count}
+								</span>
+							</span>
 						</button>
 					);
 				})}
@@ -143,19 +164,32 @@ export function IssuesList({
 				<AnimatePresence mode="popLayout">
 					{filteredTasks.length === 0 ? (
 						<motion.div
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							className="flex items-center justify-center h-40 text-[--text-tertiary]"
+							initial={{ opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							className="flex flex-col items-center justify-center h-40 text-[--text-tertiary]"
 						>
-							No issues found
+							<svg 
+								width="40" 
+								height="40" 
+								viewBox="0 0 24 24" 
+								fill="none" 
+								stroke="currentColor" 
+								strokeWidth="1" 
+								className="mb-3 opacity-50"
+							>
+								<circle cx="12" cy="12" r="10" />
+								<path d="M8 12l2 2 4-4" />
+							</svg>
+							<span className="text-sm">No issues found</span>
+							<span className="text-xs text-[--text-quaternary] mt-1">Try adjusting your filters</span>
 						</motion.div>
 					) : (
 						filteredTasks.map((task, index) => (
 							<div
 								key={task.id}
 								className={cn(
-									"transition-colors",
-									index === focusIndex && "ring-1 ring-inset ring-[--accent]",
+									"transition-all duration-100",
+									index === focusIndex && "ring-1 ring-inset ring-[--accent]/50 bg-[--accent]/5",
 								)}
 							>
 								<TaskRow

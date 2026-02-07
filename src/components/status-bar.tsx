@@ -1,6 +1,7 @@
 "use client";
 
 import type { Agent } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface StatusBarProps {
 	agents: Agent[];
@@ -25,64 +26,82 @@ export function StatusBar({ agents, selectedAgent, lastUpdated }: StatusBarProps
 	};
 
 	return (
-		<div className="h-7 md:h-8 flex items-center justify-between px-2 md:px-4 border-t border-[--border] bg-[--bg-secondary] text-[9px] md:text-[11px]">
-			<div className="flex items-center gap-2 md:gap-4 overflow-hidden">
+		<div className="h-7 flex items-center justify-between px-3 md:px-4 border-t border-[--border] bg-[--bg-secondary]/80 backdrop-blur-sm text-[10px] md:text-[11px]">
+			<div className="flex items-center gap-3 md:gap-4 overflow-hidden">
 				{agent ? (
 					<>
-						<span className="text-[--text-secondary] truncate">
-							<span className="text-[--text-primary] font-medium">
-								{agent.emoji} <span className="hidden sm:inline">{agent.name}</span>
+						{/* Selected agent info */}
+						<div className="flex items-center gap-2">
+							<span className="text-base">{agent.emoji}</span>
+							<span className="text-[--text-primary] font-medium hidden sm:inline">{agent.name}</span>
+							<span
+								className={cn(
+									"flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[9px] font-medium uppercase",
+									agent.status === "active"
+										? "bg-green-500/15 text-green-400"
+										: agent.status === "error"
+											? "bg-red-500/15 text-red-400"
+											: "bg-yellow-500/15 text-yellow-400"
+								)}
+							>
+								<span
+									className={cn(
+										"w-1.5 h-1.5 rounded-full",
+										agent.status === "active" && "bg-green-500 animate-pulse",
+										agent.status === "error" && "bg-red-500",
+										agent.status === "idle" && "bg-yellow-500"
+									)}
+								/>
+								<span className="hidden xs:inline">
+									{agent.status === "active" ? "Active" : agent.status === "error" ? "Error" : "Idle"}
+								</span>
 							</span>
+						</div>
+						
+						<span className="text-[--text-quaternary] hidden sm:inline">•</span>
+						
+						<span className="text-[--text-tertiary] hidden sm:inline">
+							Last activity: <span className="text-[--text-secondary]">{formatTime(agent.lastActivity)}</span>
 						</span>
-						<span className="text-[--text-tertiary] hidden sm:inline">|</span>
-						<span className="text-[--text-secondary] hidden sm:inline">
-							Last: <span className="text-[--text-primary]">{formatTime(agent.lastActivity)}</span>
-						</span>
+						
 						{agent.currentTask && (
 							<>
-								<span className="text-[--text-tertiary] hidden md:inline">|</span>
-								<span className="text-[--text-secondary] hidden md:inline">
-									Task: <span className="text-green-400 truncate max-w-[100px]">{agent.currentTask}</span>
+								<span className="text-[--text-quaternary] hidden md:inline">•</span>
+								<span className="text-[--text-tertiary] hidden md:inline truncate max-w-[200px]">
+									Task: <span className="text-[--accent]">{agent.currentTask}</span>
 								</span>
 							</>
 						)}
-						<span
-							className={`flex items-center gap-1 ${
-								agent.status === "active"
-									? "text-green-400"
-									: agent.status === "error"
-										? "text-red-400"
-										: "text-yellow-400"
-							}`}
-						>
-							<span
-								className={`w-1.5 h-1.5 rounded-full ${
-									agent.status === "active"
-										? "bg-green-500"
-										: agent.status === "error"
-											? "bg-red-500"
-											: "bg-yellow-500"
-								}`}
-							/>
-							<span className="hidden xs:inline">{agent.status === "active" ? "Active" : agent.status === "error" ? "Error" : "Idle"}</span>
-						</span>
 					</>
 				) : (
 					<>
-						<span className="text-[--text-secondary]">
-							<span className="hidden sm:inline">Agents: </span><span className="text-[--text-primary]">{agents.length}</span>
-						</span>
-						<span className="text-[--text-tertiary]">|</span>
-						<span className="text-[--text-secondary]">
-							<span className="hidden sm:inline">Active: </span><span className="text-green-400">{activeCount}</span>
-						</span>
+						{/* Overview stats */}
+						<div className="flex items-center gap-1.5">
+							<span className="text-[--text-tertiary]">Agents:</span>
+							<span className="text-[--text-primary] font-medium">{agents.length}</span>
+						</div>
+						<span className="text-[--text-quaternary]">•</span>
+						<div className="flex items-center gap-1.5">
+							<span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+							<span className="text-green-400 font-medium">{activeCount}</span>
+							<span className="text-[--text-tertiary] hidden sm:inline">active</span>
+						</div>
 					</>
 				)}
 			</div>
 
-			<div className="flex items-center gap-2 md:gap-4 text-[--text-tertiary] flex-shrink-0">
-				<span className="hidden sm:inline">Updated {formatTime(lastUpdated)}</span>
-				<span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" title="Live" />
+			{/* Right side */}
+			<div className="flex items-center gap-3 text-[--text-quaternary] flex-shrink-0">
+				<span className="hidden sm:inline">
+					Updated {formatTime(lastUpdated)}
+				</span>
+				<div className="flex items-center gap-1.5">
+					<span className="relative flex h-2 w-2">
+						<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+						<span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+					</span>
+					<span className="text-green-400 font-medium hidden xs:inline">Live</span>
+				</div>
 			</div>
 		</div>
 	);

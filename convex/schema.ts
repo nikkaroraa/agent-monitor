@@ -18,6 +18,15 @@ export default defineSchema({
 		),
 	}).index("by_agentId", ["agentId"]),
 
+	projects: defineTable({
+		projectId: v.string(),
+		name: v.string(),
+		color: v.string(), // hex color like #5e6ad2
+		icon: v.optional(v.string()), // emoji or icon name
+		description: v.optional(v.string()),
+		createdAt: v.number(),
+	}).index("by_projectId", ["projectId"]),
+
 	sessions: defineTable({
 		sessionKey: v.string(),
 		agentId: v.string(),
@@ -35,6 +44,7 @@ export default defineSchema({
 		title: v.string(),
 		description: v.optional(v.string()),
 		assignee: v.string(),
+		projectId: v.optional(v.string()), // NEW: link to project
 		status: v.union(
 			v.literal("backlog"),
 			v.literal("todo"),
@@ -57,7 +67,8 @@ export default defineSchema({
 	})
 		.index("by_taskId", ["taskId"])
 		.index("by_assignee", ["assignee"])
-		.index("by_status", ["status"]),
+		.index("by_status", ["status"])
+		.index("by_projectId", ["projectId"]),
 
 	messages: defineTable({
 		messageId: v.string(),
@@ -70,7 +81,6 @@ export default defineSchema({
 		.index("by_messageId", ["messageId"])
 		.index("by_timestamp", ["timestamp"]),
 
-	// Sync metadata
 	syncState: defineTable({
 		key: v.string(),
 		lastSynced: v.number(),

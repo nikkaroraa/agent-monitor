@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Task } from "@/lib/types";
+import type { Task, Project } from "@/lib/types";
 
 interface KanbanBoardProps {
 	tasks: Task[];
+	projects: Project[];
 	selectedAgent: string | null;
+	selectedProject: string | null;
 	onSelectTask: (id: string) => void;
 }
 
@@ -17,17 +19,30 @@ const COLUMNS: { id: Status; label: string }[] = [
 	{ id: "done", label: "Done" },
 ];
 
-export function KanbanBoard({ tasks, selectedAgent, onSelectTask }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, onSelectTask }: KanbanBoardProps) {
 	const filteredTasks = useMemo(() => {
-		if (!selectedAgent) return tasks;
-		return tasks.filter(t => t.assignee === selectedAgent);
-	}, [tasks, selectedAgent]);
+		let result = tasks;
+		if (selectedAgent) {
+			result = result.filter(t => t.assignee === selectedAgent);
+		}
+		if (selectedProject) {
+			result = result.filter(t => t.projectId === selectedProject);
+		}
+		return result;
+	}, [tasks, selectedAgent, selectedProject]);
 
 	const grouped = useMemo(() => {
 		const g: Record<Status, Task[]> = { backlog: [], todo: [], "in-progress": [], done: [], canceled: [] };
 		for (const t of filteredTasks) g[t.status as Status]?.push(t);
 		return g;
 	}, [filteredTasks]);
+
+	// Create project lookup map
+	const projectMap = useMemo(() => {
+		const map: Record<string, Project> = {};
+		for (const p of projects) map[p.id] = p;
+		return map;
+	}, [projects]);
 
 	return (
 		<div className="flex-1 overflow-x-auto bg-[--bg]">
@@ -38,6 +53,7 @@ export function KanbanBoard({ tasks, selectedAgent, onSelectTask }: KanbanBoardP
 						status={col.id} 
 						label={col.label} 
 						tasks={grouped[col.id]} 
+						projectMap={projectMap}
 						onSelectTask={onSelectTask}
 					/>
 				))}
@@ -46,10 +62,11 @@ export function KanbanBoard({ tasks, selectedAgent, onSelectTask }: KanbanBoardP
 	);
 }
 
-function Column({ status, label, tasks, onSelectTask }: { 
+function Column({ status, label, tasks, projectMap, onSelectTask }: { 
 	status: Status; 
 	label: string; 
 	tasks: Task[]; 
+	projectMap: Record<string, Project>;
 	onSelectTask: (id: string) => void;
 }) {
 	return (
@@ -74,14 +91,19 @@ function Column({ status, label, tasks, onSelectTask }: {
 			{/* Cards */}
 			<div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2">
 				{tasks.map((task) => (
-					<TaskCard key={task.id} task={task} onClick={() => onSelectTask(task.id)} />
+					<TaskCard 
+						key={task.id} 
+						task={task} 
+						project={task.projectId ? projectMap[task.projectId] : undefined}
+						onClick={() => onSelectTask(task.id)} 
+					/>
 				))}
 			</div>
 		</div>
 	);
 }
 
-function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
+function TaskCard({ task, project, onClick }: { task: Task; project?: Project; onClick: () => void }) {
 	return (
 		<div 
 			onClick={onClick}
@@ -90,7 +112,7 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
 			{/* Row 1: Task ID + Avatar */}
 			<div className="flex items-center justify-between mb-2">
 				<span className="text-[11px] text-[--text-muted] tracking-wide">
-					{task.id.toUpperCase().replace("TASK-", "TASK-")}
+					{task.id.toUpperCase()}
 				</span>
 				<AssigneeIcon assignee={task.assignee} />
 			</div>
@@ -105,11 +127,14 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
 				</span>
 			</div>
 
-			{/* Row 3: Actions + Date badge */}
+			{/* Row 3: Actions + Project badge + Date badge */}
 			<div className="flex items-center gap-2 mb-3">
 				<button className="px-1.5 py-1 text-[--text-muted] hover:text-[--text-secondary] hover:bg-white/5 rounded text-xs">
 					···
 				</button>
+				{project && (
+					<ProjectBadge project={project} />
+				)}
 				{task.completedAt && (
 					<DateBadge date={task.completedAt} />
 				)}
@@ -120,6 +145,24 @@ function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
 				Created {formatCreatedDate(task.createdAt)}
 			</div>
 		</div>
+	);
+}
+
+function ProjectBadge({ project }: { project: Project }) {
+	return (
+		<span 
+			className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px]"
+			style={{ 
+				backgroundColor: `${project.color}20`,
+				color: project.color 
+			}}
+		>
+			<span 
+				className="w-2 h-2 rounded-sm" 
+				style={{ backgroundColor: project.color }}
+			/>
+			{project.name}
+		</span>
 	);
 }
 

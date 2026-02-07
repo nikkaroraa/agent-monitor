@@ -4,10 +4,11 @@ import { query } from "./_generated/server";
 export const getData = query({
 	args: {},
 	handler: async (ctx) => {
-		const [agents, tasks, sessions, syncStates] = await Promise.all([
+		const [agents, tasks, sessions, projects, syncStates] = await Promise.all([
 			ctx.db.query("agents").collect(),
 			ctx.db.query("tasks").order("desc").collect(),
 			ctx.db.query("sessions").collect(),
+			ctx.db.query("projects").collect(),
 			ctx.db.query("syncState").collect(),
 		]);
 
@@ -26,6 +27,7 @@ export const getData = query({
 			title: t.title,
 			description: t.description,
 			assignee: t.assignee,
+			projectId: t.projectId,
 			status: t.status,
 			priority: t.priority,
 			createdBy: t.createdBy,
@@ -45,6 +47,14 @@ export const getData = query({
 			lastMessage: s.lastMessage,
 		}));
 
+		const transformedProjects = projects.map((p) => ({
+			id: p.projectId,
+			name: p.name,
+			color: p.color,
+			icon: p.icon,
+			description: p.description,
+		}));
+
 		// Find latest sync time
 		const lastSynced = syncStates.reduce((max, s) => Math.max(max, s.lastSynced), 0);
 
@@ -52,6 +62,7 @@ export const getData = query({
 			agents: transformedAgents,
 			tasks: transformedTasks,
 			sessions: transformedSessions,
+			projects: transformedProjects,
 			lastUpdated: lastSynced ? new Date(lastSynced).toISOString() : new Date().toISOString(),
 		};
 	},

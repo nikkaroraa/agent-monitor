@@ -6,10 +6,14 @@ export interface Agent {
 	status: "active" | "idle" | "error";
 	lastActivity?: string;
 	currentTask?: string;
-	tokenUsage?: {
-		input: number;
-		output: number;
-	};
+}
+
+export interface Project {
+	id: string;
+	name: string;
+	color: string;
+	icon?: string;
+	description?: string;
 }
 
 export interface Session {
@@ -27,6 +31,7 @@ export interface Task {
 	title: string;
 	description?: string;
 	assignee: string;
+	projectId?: string;
 	status: "backlog" | "todo" | "in-progress" | "done" | "canceled";
 	priority: "urgent" | "high" | "medium" | "low" | "none";
 	createdBy: string;
@@ -48,6 +53,7 @@ export interface Message {
 export interface DashboardData {
 	agents: Agent[];
 	tasks: Task[];
+	projects: Project[];
 	sessions?: Session[];
 	messages?: Message[];
 	lastUpdated: string;

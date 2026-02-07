@@ -1,16 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import type { Agent } from "@/lib/types";
+import type { Agent, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface LinearSidebarProps {
 	agents: Agent[];
+	projects: Project[];
 	selectedAgent: string | null;
+	selectedProject: string | null;
 	onSelectAgent: (id: string | null) => void;
+	onSelectProject: (id: string | null) => void;
+	onCreateProject: () => void;
 }
 
-export function LinearSidebar({ agents, selectedAgent, onSelectAgent }: LinearSidebarProps) {
+export function LinearSidebar({ 
+	agents, 
+	projects,
+	selectedAgent, 
+	selectedProject,
+	onSelectAgent,
+	onSelectProject,
+	onCreateProject,
+}: LinearSidebarProps) {
 	const [workspaceOpen, setWorkspaceOpen] = useState(true);
 	const [agentsOpen, setAgentsOpen] = useState(true);
 
@@ -45,7 +57,37 @@ export function LinearSidebar({ agents, selectedAgent, onSelectAgent }: LinearSi
 
 				{/* Workspace */}
 				<Section label="Workspace" open={workspaceOpen} onToggle={() => setWorkspaceOpen(!workspaceOpen)}>
-					<NavItem icon={<FolderIcon />} label="Projects" />
+					{/* Projects */}
+					<NavItem 
+						icon={<FolderIcon />} 
+						label="Projects" 
+						expandable
+						selected={selectedProject === null && selectedAgent === null}
+						onClick={() => { onSelectProject(null); onSelectAgent(null); }}
+					/>
+					{projects.map((project) => (
+						<NavItem
+							key={project.id}
+							icon={
+								<span 
+									className="w-3 h-3 rounded-sm" 
+									style={{ backgroundColor: project.color }}
+								/>
+							}
+							label={project.name}
+							selected={selectedProject === project.id}
+							onClick={() => { onSelectProject(project.id); onSelectAgent(null); }}
+							indent
+						/>
+					))}
+					<NavItem 
+						icon={<PlusIcon className="w-3 h-3" />} 
+						label="New project" 
+						muted 
+						indent
+						onClick={onCreateProject}
+					/>
+					
 					<NavItem icon={<ViewsIcon />} label="Views" />
 					<NavItem icon={<MoreIcon />} label="More" muted />
 				</Section>
@@ -55,8 +97,8 @@ export function LinearSidebar({ agents, selectedAgent, onSelectAgent }: LinearSi
 					<NavItem 
 						icon={<span className="w-4 h-4 rounded bg-purple-600/30 flex items-center justify-center text-[8px]">🤖</span>}
 						label="All Agents"
-						selected={selectedAgent === null}
-						onClick={() => onSelectAgent(null)}
+						selected={selectedAgent === null && selectedProject === null}
+						onClick={() => { onSelectAgent(null); onSelectProject(null); }}
 						expandable
 					/>
 					{agents.map((agent) => (
@@ -65,7 +107,7 @@ export function LinearSidebar({ agents, selectedAgent, onSelectAgent }: LinearSi
 							icon={<span className="text-sm">{agent.emoji}</span>}
 							label={agent.name}
 							selected={selectedAgent === agent.id}
-							onClick={() => onSelectAgent(agent.id)}
+							onClick={() => { onSelectAgent(agent.id); onSelectProject(null); }}
 							indent
 							badge={
 								<span className={cn(
@@ -92,7 +134,7 @@ export function LinearSidebar({ agents, selectedAgent, onSelectAgent }: LinearSi
 			<div className="p-3 border-t border-[#1a1a1a]">
 				<div className="p-2 bg-[#141414] rounded text-[11px]">
 					<div className="text-[--text-muted]">What's new</div>
-					<div className="text-[--text-secondary] mt-0.5">Agent monitor for product management</div>
+					<div className="text-[--text-secondary] mt-0.5">Project management added</div>
 				</div>
 			</div>
 		</aside>
@@ -151,7 +193,7 @@ function NavItem({
 	);
 }
 
-// Icons (compact)
+// Icons
 function ChevronIcon({ className }: { className?: string }) {
 	return <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 6l3 3 3-3" /></svg>;
 }
@@ -176,8 +218,8 @@ function ViewsIcon() {
 function MoreIcon() {
 	return <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1" /><circle cx="8" cy="8" r="1" /><circle cx="13" cy="8" r="1" /></svg>;
 }
-function PlusIcon() {
-	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v10M3 8h10" /></svg>;
+function PlusIcon({ className }: { className?: string }) {
+	return <svg className={className} width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v10M3 8h10" /></svg>;
 }
 function BoltIcon() {
 	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M9 1L3 9h5l-1 6 6-8H8l1-6z" /></svg>;

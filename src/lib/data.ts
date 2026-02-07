@@ -237,6 +237,7 @@ export function getDashboardData(): DashboardData {
 	return {
 		agents: enrichedAgents,
 		tasks,
+		projects: [],
 		messages: messagesData.messages || [],
 		lastUpdated: new Date().toISOString(),
 	};

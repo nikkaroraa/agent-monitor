@@ -7,9 +7,10 @@ interface StatusBarProps {
 	agents: Agent[];
 	selectedAgent: string | null;
 	lastUpdated: string;
+	isConvex?: boolean;
 }
 
-export function StatusBar({ agents, selectedAgent, lastUpdated }: StatusBarProps) {
+export function StatusBar({ agents, selectedAgent, lastUpdated, isConvex }: StatusBarProps) {
 	const agent = selectedAgent ? agents.find((a) => a.id === selectedAgent) : null;
 	const activeCount = agents.filter((a) => a.status === "active").length;
 
@@ -61,7 +62,7 @@ export function StatusBar({ agents, selectedAgent, lastUpdated }: StatusBarProps
 						<span className="text-[--text-quaternary] hidden sm:inline">•</span>
 						
 						<span className="text-[--text-tertiary] hidden sm:inline">
-							Last activity: <span className="text-[--text-secondary]">{formatTime(agent.lastActivity)}</span>
+							Last: <span className="text-[--text-secondary]">{formatTime(agent.lastActivity)}</span>
 						</span>
 						
 						{agent.currentTask && (
@@ -92,15 +93,27 @@ export function StatusBar({ agents, selectedAgent, lastUpdated }: StatusBarProps
 
 			{/* Right side */}
 			<div className="flex items-center gap-3 text-[--text-quaternary] flex-shrink-0">
+				{/* Convex indicator */}
+				{isConvex && (
+					<span className="hidden sm:flex items-center gap-1.5 px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 text-[9px] font-medium uppercase">
+						<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+						</svg>
+						Convex
+					</span>
+				)}
+				
 				<span className="hidden sm:inline">
-					Updated {formatTime(lastUpdated)}
+					Synced {formatTime(lastUpdated)}
 				</span>
 				<div className="flex items-center gap-1.5">
 					<span className="relative flex h-2 w-2">
 						<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
 						<span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
 					</span>
-					<span className="text-green-400 font-medium hidden xs:inline">Live</span>
+					<span className="text-green-400 font-medium hidden xs:inline">
+						{isConvex ? "Real-time" : "Live"}
+					</span>
 				</div>
 			</div>
 		</div>

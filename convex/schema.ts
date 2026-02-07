@@ -18,6 +18,18 @@ export default defineSchema({
 		),
 	}).index("by_agentId", ["agentId"]),
 
+	sessions: defineTable({
+		sessionKey: v.string(),
+		agentId: v.string(),
+		channel: v.string(),
+		status: v.union(v.literal("active"), v.literal("idle"), v.literal("closed")),
+		lastActivity: v.number(),
+		messageCount: v.optional(v.number()),
+		lastMessage: v.optional(v.string()),
+	})
+		.index("by_sessionKey", ["sessionKey"])
+		.index("by_agentId", ["agentId"]),
+
 	tasks: defineTable({
 		taskId: v.string(),
 		title: v.string(),
@@ -57,4 +69,11 @@ export default defineSchema({
 	})
 		.index("by_messageId", ["messageId"])
 		.index("by_timestamp", ["timestamp"]),
+
+	// Sync metadata
+	syncState: defineTable({
+		key: v.string(),
+		lastSynced: v.number(),
+		version: v.number(),
+	}).index("by_key", ["key"]),
 });

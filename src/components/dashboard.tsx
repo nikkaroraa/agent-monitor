@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { DashboardData, View } from "@/lib/types";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { DashboardData, View } from "@/lib/types";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { IssuesList } from "./issues-list";
@@ -10,12 +12,11 @@ import { StatusBar } from "./status-bar";
 import { CommandPalette } from "./command-palette";
 
 // Check if Convex is configured
-// TODO: Wire up Convex queries properly - using API mode for now
-const CONVEX_ENABLED = false; // !!process.env.NEXT_PUBLIC_CONVEX_URL;
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 export function Dashboard() {
-	const [data, setData] = useState<DashboardData | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [fallbackData, setFallbackData] = useState<DashboardData | null>(null);
+	const [fallbackLoading, setFallbackLoading] = useState(!CONVEX_URL);
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
@@ -23,28 +24,36 @@ export function Dashboard() {
 	const [currentView, setCurrentView] = useState<View>("all");
 	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
+	// Convex real-time query (returns undefined while loading, null if error)
+	const convexData = useQuery(api.dashboard.getData);
+
 	// Fallback fetch for non-Convex mode
 	const fetchData = useCallback(async () => {
 		try {
 			const res = await fetch("/api/dashboard");
 			const json = await res.json();
-			setData(json);
+			setFallbackData(json);
 		} catch (error) {
 			console.error("Failed to fetch dashboard data:", error);
 		} finally {
-			setLoading(false);
+			setFallbackLoading(false);
 		}
 	}, []);
 
-	// Initial fetch + auto-refresh (for non-Convex mode)
+	// Trigger sync on mount if Convex is enabled
 	useEffect(() => {
-		if (!CONVEX_ENABLED) {
+		if (CONVEX_URL) {
+			// Trigger a sync in the background
+			fetch("/api/sync", { method: "POST" }).catch(console.error);
+		}
+	}, []);
+
+	// Initial fetch + auto-refresh (for non-Convex mode only)
+	useEffect(() => {
+		if (!CONVEX_URL) {
 			fetchData();
 			const interval = setInterval(fetchData, 30000);
 			return () => clearInterval(interval);
-		} else {
-			// Convex mode - data comes from hook
-			setLoading(false);
 		}
 	}, [fetchData]);
 
@@ -61,7 +70,49 @@ export function Dashboard() {
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, []);
 
-	if (loading || !data) {
+	// Determine data source
+	const isConvexMode = !!CONVEX_URL;
+	const isLoading = isConvexMode ? convexData === undefined : fallbackLoading;
+	
+	// Transform Convex data if available
+	const data: DashboardData | null = isConvexMode && convexData
+		? {
+				agents: convexData.agents.map((a) => ({
+					id: a.id,
+					name: a.name,
+					emoji: a.emoji,
+					status: a.status,
+					lastActivity: a.lastActivity,
+					currentTask: a.currentTask,
+				})),
+				tasks: convexData.tasks.map((t) => ({
+					id: t.id,
+					title: t.title,
+					description: t.description,
+					assignee: t.assignee,
+					status: t.status,
+					priority: t.priority,
+					createdBy: t.createdBy,
+					createdAt: t.createdAt,
+					claimedAt: t.claimedAt,
+					completedAt: t.completedAt,
+					notes: t.notes,
+				})),
+				sessions: convexData.sessions,
+				lastUpdated: convexData.lastUpdated,
+			}
+		: fallbackData;
+
+	// Manual refresh - triggers sync for Convex mode
+	const handleRefresh = useCallback(async () => {
+		if (isConvexMode) {
+			await fetch("/api/sync", { method: "POST" });
+		} else {
+			await fetchData();
+		}
+	}, [isConvexMode, fetchData]);
+
+	if (isLoading || !data) {
 		return (
 			<div className="h-screen flex items-center justify-center bg-[--bg-primary]">
 				<div className="flex flex-col items-center gap-4">
@@ -89,7 +140,9 @@ export function Dashboard() {
 								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
 							/>
 						</svg>
-						<span className="text-sm">Loading Mission Control...</span>
+						<span className="text-sm">
+							{isConvexMode ? "Connecting to Convex..." : "Loading Mission Control..."}
+						</span>
 					</div>
 				</div>
 			</div>
@@ -114,7 +167,7 @@ export function Dashboard() {
 			{/* Header */}
 			<Header 
 				onOpenCommandPalette={() => setCommandPaletteOpen(true)} 
-				onRefresh={fetchData}
+				onRefresh={handleRefresh}
 				onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
 				mobileMenuOpen={mobileMenuOpen}
 			/>
@@ -169,14 +222,17 @@ export function Dashboard() {
 			</div>
 
 			{/* Status bar */}
-			<StatusBar agents={data.agents} selectedAgent={selectedAgent} lastUpdated={data.lastUpdated} />
+			<StatusBar 
+				agents={data.agents} 
+				selectedAgent={selectedAgent} 
+				lastUpdated={data.lastUpdated}
+				isConvex={isConvexMode}
+			/>
 		</div>
 	);
 }
 
-// Convex-powered dashboard wrapper
+// Convex-powered dashboard wrapper (legacy, now integrated)
 export function ConvexDashboard() {
-	// This would use the Convex hook when enabled
-	// For now, falls back to the standard dashboard
 	return <Dashboard />;
 }

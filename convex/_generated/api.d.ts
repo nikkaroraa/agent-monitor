@@ -9,7 +9,10 @@
  */
 
 import type * as agents from "../agents.js";
+import type * as dashboard from "../dashboard.js";
 import type * as messages from "../messages.js";
+import type * as sessions from "../sessions.js";
+import type * as sync from "../sync.js";
 import type * as tasks from "../tasks.js";
 
 import type {
@@ -20,7 +23,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agents: typeof agents;
+  dashboard: typeof dashboard;
   messages: typeof messages;
+  sessions: typeof sessions;
+  sync: typeof sync;
   tasks: typeof tasks;
 }>;
 

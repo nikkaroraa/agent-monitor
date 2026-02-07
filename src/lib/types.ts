@@ -2,7 +2,7 @@ export interface Agent {
 	id: string;
 	name: string;
 	emoji: string;
-	description: string;
+	description?: string;
 	status: "active" | "idle" | "error";
 	lastActivity?: string;
 	currentTask?: string;
@@ -10,6 +10,16 @@ export interface Agent {
 		input: number;
 		output: number;
 	};
+}
+
+export interface Session {
+	key: string;
+	agentId: string;
+	channel: string;
+	status: "active" | "idle" | "closed";
+	lastActivity: string;
+	messageCount?: number;
+	lastMessage?: string;
 }
 
 export interface Task {
@@ -20,7 +30,7 @@ export interface Task {
 	status: "backlog" | "todo" | "in-progress" | "done" | "canceled";
 	priority: "urgent" | "high" | "medium" | "low" | "none";
 	createdBy: string;
-	createdAt: string;
+	createdAt?: string;
 	claimedAt?: string;
 	completedAt?: string;
 	notes?: string[];
@@ -38,7 +48,8 @@ export interface Message {
 export interface DashboardData {
 	agents: Agent[];
 	tasks: Task[];
-	messages: Message[];
+	sessions?: Session[];
+	messages?: Message[];
 	lastUpdated: string;
 }
 

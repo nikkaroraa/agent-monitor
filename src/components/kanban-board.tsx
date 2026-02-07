@@ -45,8 +45,8 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 	}, [projects]);
 
 	return (
-		<div className="flex-1 overflow-x-auto bg-[--bg]">
-			<div className="flex h-full">
+		<div className="flex-1 overflow-x-auto bg-[#0a0a0a] p-4">
+			<div className="flex h-full gap-4">
 				{COLUMNS.map((col) => (
 					<Column 
 						key={col.id} 
@@ -70,26 +70,26 @@ function Column({ status, label, tasks, projectMap, onSelectTask }: {
 	onSelectTask: (id: string) => void;
 }) {
 	return (
-		<div className="w-[340px] flex-shrink-0 flex flex-col border-r border-[#1a1a1a]">
-			{/* Column header */}
-			<div className="flex items-center justify-between px-4 py-3">
+		<div className="w-[320px] flex-shrink-0 flex flex-col">
+			{/* Column header - Linear style */}
+			<div className="flex items-center justify-between px-2 py-2 mb-2">
 				<div className="flex items-center gap-2">
-					<StatusIcon status={status} size={16} />
-					<span className="text-[14px] font-medium text-[--text-primary]">{label}</span>
-					<span className="text-[14px] text-[--text-muted] ml-1">{tasks.length}</span>
+					<StatusIcon status={status} size={14} />
+					<span className="text-[13px] font-medium text-[#e8e8e8]">{label}</span>
+					<span className="text-[13px] text-[#555] ml-0.5">{tasks.length}</span>
 				</div>
-				<div className="flex items-center gap-1">
-					<button className="p-1.5 hover:bg-white/5 rounded">
+				<div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+					<button className="p-1 hover:bg-white/5 rounded">
 						<DotsIcon />
 					</button>
-					<button className="p-1.5 hover:bg-white/5 rounded">
+					<button className="p-1 hover:bg-white/5 rounded">
 						<PlusIcon />
 					</button>
 				</div>
 			</div>
 
-			{/* Cards */}
-			<div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2">
+			{/* Cards - 8px gap */}
+			<div className="flex-1 overflow-y-auto space-y-2">
 				{tasks.map((task) => (
 					<TaskCard 
 						key={task.id} 
@@ -107,31 +107,28 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 	return (
 		<div 
 			onClick={onClick}
-			className="bg-[--card-bg] border border-[--card-border] rounded-md p-4 cursor-pointer hover:bg-[--card-hover] transition-colors"
+			className="group bg-[#121212] border border-[#262626] rounded-md p-3 cursor-pointer hover:bg-[#1a1a1a] hover:border-[#333] transition-colors min-h-[80px]"
 		>
 			{/* Row 1: Task ID + Avatar */}
-			<div className="flex items-center justify-between mb-2">
-				<span className="text-[11px] text-[--text-muted] tracking-wide">
+			<div className="flex items-center justify-between mb-1.5">
+				<span className="text-[11px] text-[#666] font-mono">
 					{task.id.toUpperCase()}
 				</span>
 				<AssigneeIcon assignee={task.assignee} />
 			</div>
 
 			{/* Row 2: Status + Title */}
-			<div className="flex items-start gap-2 mb-3">
+			<div className="flex items-start gap-2 mb-2">
 				<span className="mt-0.5 flex-shrink-0">
-					<StatusIcon status={task.status} size={16} />
+					<StatusIcon status={task.status} size={14} />
 				</span>
-				<span className="text-[14px] text-[--text-primary] leading-snug">
+				<span className="text-[13px] text-[#e8e8e8] leading-tight font-normal">
 					{task.title}
 				</span>
 			</div>
 
-			{/* Row 3: Actions + Project badge + Date badge */}
-			<div className="flex items-center gap-2 mb-3">
-				<button className="px-1.5 py-1 text-[--text-muted] hover:text-[--text-secondary] hover:bg-white/5 rounded text-xs">
-					···
-				</button>
+			{/* Row 3: Project badge + Date badge (no dots button) */}
+			<div className="flex items-center gap-1.5 flex-wrap">
 				{project && (
 					<ProjectBadge project={project} />
 				)}
@@ -141,7 +138,7 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 			</div>
 
 			{/* Row 4: Created footer */}
-			<div className="text-[11px] text-[--text-faint]">
+			<div className="text-[10px] text-[#444] mt-2">
 				Created {formatCreatedDate(task.createdAt)}
 			</div>
 		</div>
@@ -151,14 +148,14 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 function ProjectBadge({ project }: { project: Project }) {
 	return (
 		<span 
-			className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px]"
+			className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
 			style={{ 
-				backgroundColor: `${project.color}20`,
+				backgroundColor: `${project.color}15`,
 				color: project.color 
 			}}
 		>
 			<span 
-				className="w-2 h-2 rounded-sm" 
+				className="w-1.5 h-1.5 rounded-sm" 
 				style={{ backgroundColor: project.color }}
 			/>
 			{project.name}
@@ -166,41 +163,50 @@ function ProjectBadge({ project }: { project: Project }) {
 	);
 }
 
-function StatusIcon({ status, size = 16 }: { status: string; size?: number }) {
+function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 	const s = size;
 	const sw = 1.5;
+	
+	// Linear exact colors
+	const colors: Record<string, string> = {
+		todo: "#666666",
+		"in-progress": "#f5a623",
+		done: "#22c55e",
+		backlog: "#555555",
+	};
+	const color = colors[status] || "#666666";
 	
 	switch (status) {
 		case "todo":
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="6" stroke="var(--todo)" strokeWidth={sw} />
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
 				</svg>
 			);
 		case "in-progress":
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="6" stroke="var(--in-progress)" strokeWidth={sw} />
-					<path d="M8 2 A6 6 0 0 1 14 8" stroke="var(--in-progress)" strokeWidth={sw} strokeLinecap="round" />
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
+					<path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke={color} strokeWidth={sw} strokeLinecap="round" />
 				</svg>
 			);
 		case "done":
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="6" stroke="var(--done)" strokeWidth={sw} />
-					<path d="M5 8l2 2 4-4" stroke="var(--done)" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
+					<path d="M5.5 8l1.5 1.5 3.5-3.5" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
 				</svg>
 			);
 		case "backlog":
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="6" stroke="var(--backlog)" strokeWidth={sw} strokeDasharray="2 2" />
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} strokeDasharray="2 2" />
 				</svg>
 			);
 		default:
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="6" stroke="var(--todo)" strokeWidth={sw} />
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
 				</svg>
 			);
 	}
@@ -214,7 +220,7 @@ function AssigneeIcon({ assignee }: { assignee: string }) {
 	
 	return (
 		<div 
-			className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[10px]"
+			className="w-5 h-5 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[9px]"
 			title={assignee}
 		>
 			{emojis[assignee] || assignee.charAt(0).toUpperCase()}
@@ -227,8 +233,8 @@ function DateBadge({ date }: { date: string }) {
 	const formatted = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
 	
 	return (
-		<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#1a1a1a] rounded text-[11px] text-[--text-muted]">
-			<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+		<span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] rounded text-[10px] text-[#666]">
+			<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
 				<rect x="2" y="3" width="12" height="11" rx="1" />
 				<path d="M5 1v3M11 1v3M2 7h12" />
 			</svg>
@@ -239,18 +245,18 @@ function DateBadge({ date }: { date: string }) {
 
 function DotsIcon() {
 	return (
-		<svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-muted)">
-			<circle cx="3" cy="8" r="1.2" />
-			<circle cx="8" cy="8" r="1.2" />
-			<circle cx="13" cy="8" r="1.2" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="#555">
+			<circle cx="3" cy="8" r="1" />
+			<circle cx="8" cy="8" r="1" />
+			<circle cx="13" cy="8" r="1" />
 		</svg>
 	);
 }
 
 function PlusIcon() {
 	return (
-		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
-			<path d="M8 3v10M3 8h10" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#555" strokeWidth="1.5">
+			<path d="M8 4v8M4 8h8" />
 		</svg>
 	);
 }

@@ -14,6 +14,7 @@ interface CommandPaletteProps {
 	onSelectAgent: (id: string) => void;
 	onSelectTask: (id: string) => void;
 	onChangeView: (view: View) => void;
+	onCreateTask: () => void;
 }
 
 export function CommandPalette({
@@ -24,6 +25,7 @@ export function CommandPalette({
 	onSelectAgent,
 	onSelectTask,
 	onChangeView,
+	onCreateTask,
 }: CommandPaletteProps) {
 	const [search, setSearch] = useState("");
 
@@ -106,6 +108,17 @@ export function CommandPalette({
 									}
 									className="mb-3"
 								>
+									<CommandItem
+										onSelect={() => {
+											onCreateTask();
+											onOpenChange(false);
+										}}
+									>
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+											<path d="M12 5v14M5 12h14" strokeLinecap="round" />
+										</svg>
+										<span>New task</span>
+									</CommandItem>
 									<CommandItem
 										onSelect={() => {
 											onChangeView("all");

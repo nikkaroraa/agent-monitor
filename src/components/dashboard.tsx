@@ -10,6 +10,8 @@ import { KanbanBoard } from "./kanban-board";
 import { TaskDetailPanel } from "./task-detail-panel";
 import { AgentDetailPanel } from "./agent-detail-panel";
 import { CreateProjectDialog } from "./create-project-dialog";
+import { CreateTaskDialog } from "./create-task-dialog";
+import { CommandPalette } from "./command-palette";
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -24,6 +26,8 @@ export function Dashboard() {
 	const [viewingAgentId, setViewingAgentId] = useState<string | null>(null);
 	const [currentFilter, setCurrentFilter] = useState<ViewFilter>("all");
 	const [createProjectOpen, setCreateProjectOpen] = useState(false);
+	const [createTaskOpen, setCreateTaskOpen] = useState(false);
+	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
 	// Convex queries
 	const convexData = useQuery(api.dashboard.getData);
@@ -49,6 +53,18 @@ export function Dashboard() {
 			seedProjects().catch(console.error);
 		}
 	}, [seedProjects]);
+
+	// Command palette keyboard shortcut (Cmd+K / Ctrl+K)
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+				e.preventDefault();
+				setCommandPaletteOpen(true);
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, []);
 
 	useEffect(() => {
 		if (!CONVEX_URL) {
@@ -119,6 +135,16 @@ export function Dashboard() {
 	// View agent detail (from context menu or explicit action)
 	const handleViewAgent = (id: string) => {
 		setViewingAgentId(id);
+	};
+
+	// Handle task creation success - trigger re-sync
+	const handleTaskCreated = async () => {
+		if (CONVEX_URL) {
+			await fetch("/api/sync", { method: "POST" }).catch(console.error);
+		} else {
+			// Refresh fallback data
+			fetchData();
+		}
 	};
 
 	if (isLoading || !data) {
@@ -194,6 +220,32 @@ export function Dashboard() {
 			<CreateProjectDialog
 				open={createProjectOpen}
 				onClose={() => setCreateProjectOpen(false)}
+			/>
+
+			{/* Create task dialog */}
+			<CreateTaskDialog
+				open={createTaskOpen}
+				onClose={() => setCreateTaskOpen(false)}
+				agents={data.agents}
+				projects={data.projects}
+				onSuccess={handleTaskCreated}
+			/>
+
+			{/* Command palette (Cmd+K) */}
+			<CommandPalette
+				open={commandPaletteOpen}
+				onOpenChange={setCommandPaletteOpen}
+				agents={data.agents}
+				tasks={data.tasks}
+				onSelectAgent={(id) => { setSelectedAgent(id); setSelectedProject(null); }}
+				onSelectTask={setSelectedTaskId}
+				onChangeView={(view) => {
+					// Map View to ViewFilter
+					if (view === "all" || view === "active" || view === "backlog") {
+						setCurrentFilter(view);
+					}
+				}}
+				onCreateTask={() => setCreateTaskOpen(true)}
 			/>
 		</div>
 	);

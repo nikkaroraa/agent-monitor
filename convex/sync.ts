@@ -69,6 +69,7 @@ export const syncTasks = mutation({
 				title: v.string(),
 				description: v.optional(v.string()),
 				assignee: v.string(),
+				projectId: v.optional(v.string()),
 				status: v.union(
 					v.literal("backlog"),
 					v.literal("todo"),
@@ -103,6 +104,7 @@ export const syncTasks = mutation({
 					title: task.title,
 					description: task.description,
 					assignee: task.assignee,
+					projectId: task.projectId,
 					status: task.status,
 					priority: task.priority,
 					createdBy: task.createdBy,
@@ -221,6 +223,7 @@ export const fullSync = mutation({
 				title: v.string(),
 				description: v.optional(v.string()),
 				assignee: v.string(),
+				projectId: v.optional(v.string()),
 				status: v.union(
 					v.literal("backlog"),
 					v.literal("todo"),
@@ -270,6 +273,7 @@ export const fullSync = mutation({
 					title: task.title,
 					description: task.description,
 					assignee: task.assignee,
+					projectId: task.projectId,
 					status: task.status,
 					priority: task.priority,
 					createdBy: task.createdBy,

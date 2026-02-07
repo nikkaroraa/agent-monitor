@@ -176,6 +176,7 @@ export function Dashboard() {
 				<TaskDetailPanel
 					task={selectedTask}
 					project={data.projects.find(p => p.id === selectedTask.projectId)}
+					projects={data.projects}
 					agents={data.agents}
 					onClose={() => setSelectedTaskId(null)}
 				/>

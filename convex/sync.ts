@@ -315,6 +315,64 @@ export const fullSync = mutation({
 	},
 });
 
+// Bulk sync projects from OpenClaw
+export const syncProjects = mutation({
+	args: {
+		projects: v.array(
+			v.object({
+				projectId: v.string(),
+				name: v.string(),
+				color: v.string(),
+				icon: v.optional(v.string()),
+				description: v.optional(v.string()),
+			})
+		),
+	},
+	handler: async (ctx, args) => {
+		for (const project of args.projects) {
+			const existing = await ctx.db
+				.query("projects")
+				.withIndex("by_projectId", (q) => q.eq("projectId", project.projectId))
+				.first();
+
+			if (existing) {
+				await ctx.db.patch(existing._id, {
+					name: project.name,
+					color: project.color,
+					icon: project.icon,
+					description: project.description,
+				});
+			} else {
+				await ctx.db.insert("projects", {
+					...project,
+					createdAt: Date.now(),
+				});
+			}
+		}
+
+		// Update sync state
+		const syncState = await ctx.db
+			.query("syncState")
+			.withIndex("by_key", (q) => q.eq("key", "projects"))
+			.first();
+
+		if (syncState) {
+			await ctx.db.patch(syncState._id, {
+				lastSynced: Date.now(),
+				version: syncState.version + 1,
+			});
+		} else {
+			await ctx.db.insert("syncState", {
+				key: "projects",
+				lastSynced: Date.now(),
+				version: 1,
+			});
+		}
+
+		return { synced: args.projects.length };
+	},
+});
+
 // Delete an agent by ID
 export const deleteAgent = mutation({
   args: { agentId: v.string() },

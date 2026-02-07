@@ -6,6 +6,7 @@ import path from "node:path";
 
 const OPENCLAW_BASE = process.env.OPENCLAW_BASE || path.join(process.env.HOME || "", ".openclaw");
 const TASKS_FILE = path.join(OPENCLAW_BASE, "shared", "tasks.json");
+const PROJECTS_FILE = path.join(OPENCLAW_BASE, "shared", "projects.json");
 const AGENTS_DIR = path.join(OPENCLAW_BASE, "agents");
 
 // Agent metadata
@@ -102,6 +103,7 @@ async function getTasksFromDisk(): Promise<Array<{
 	title: string;
 	description?: string;
 	assignee: string;
+	projectId?: string;
 	status: "backlog" | "todo" | "in-progress" | "done" | "canceled";
 	priority: "urgent" | "high" | "medium" | "low" | "none";
 	createdBy: string;
@@ -123,6 +125,7 @@ async function getTasksFromDisk(): Promise<Array<{
 			title: t.title as string,
 			description: t.description as string | undefined,
 			assignee: t.assignee as string,
+			projectId: t.projectId as string | undefined,
 			status: (t.status as string) || "backlog",
 			priority: (t.priority as string) || "none",
 			createdBy: (t.createdBy as string) || "unknown",
@@ -137,6 +140,34 @@ async function getTasksFromDisk(): Promise<Array<{
 	}
 }
 
+async function getProjectsFromDisk(): Promise<Array<{
+	projectId: string;
+	name: string;
+	color: string;
+	icon?: string;
+	description?: string;
+}>> {
+	if (!fs.existsSync(PROJECTS_FILE)) {
+		return [];
+	}
+
+	try {
+		const content = fs.readFileSync(PROJECTS_FILE, "utf-8");
+		const data = JSON.parse(content);
+		
+		return (data.projects || []).map((p: Record<string, unknown>) => ({
+			projectId: p.id as string,
+			name: p.name as string,
+			color: p.color as string,
+			icon: p.icon as string | undefined,
+			description: p.description as string | undefined,
+		}));
+	} catch (error) {
+		console.error("Error reading projects:", error);
+		return [];
+	}
+}
+
 export async function POST() {
 	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 	
@@ -147,19 +178,32 @@ export async function POST() {
 	const client = new ConvexHttpClient(convexUrl);
 
 	try {
-		const [agents, tasks] = await Promise.all([
+		const [agents, tasks, projects] = await Promise.all([
 			getAgentsFromDisk(),
 			getTasksFromDisk(),
+			getProjectsFromDisk(),
 		]);
 
-		const result = await client.mutation(api.sync.fullSync, {
+		// Sync agents and tasks
+		const syncResult = await client.mutation(api.sync.fullSync, {
 			agents,
 			tasks,
 		});
 
+		// Sync projects separately
+		let projectsResult = { synced: 0 };
+		if (projects.length > 0) {
+			projectsResult = await client.mutation(api.sync.syncProjects, {
+				projects,
+			});
+		}
+
 		return NextResponse.json({
 			success: true,
-			synced: result,
+			synced: {
+				...syncResult,
+				projects: projectsResult.synced,
+			},
 		});
 	} catch (error) {
 		console.error("Sync error:", error);
@@ -176,6 +220,7 @@ export async function GET() {
 		paths: {
 			agents: AGENTS_DIR,
 			tasks: TASKS_FILE,
+			projects: PROJECTS_FILE,
 		},
 	});
 }

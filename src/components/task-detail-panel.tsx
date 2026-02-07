@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import type { Agent, Task, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface TaskDetailPanelProps {
 	task: Task;
 	project?: Project;
+	projects: Project[];
 	agents: Agent[];
 	onClose: () => void;
 }
@@ -31,10 +35,22 @@ const agentEmojis: Record<string, string> = {
 	director: "🎬", analyst: "📊", "job-hunt": "💼", clawink: "✍️", kat: "🐱",
 };
 
-export function TaskDetailPanel({ task, project, agents, onClose }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, project, projects, agents, onClose }: TaskDetailPanelProps) {
 	const agent = agents.find((a) => a.id === task.assignee);
 	const status = statusConfig[task.status];
 	const priority = priorityConfig[task.priority];
+
+	const [showProjectPicker, setShowProjectPicker] = useState(false);
+	const assignToProject = useMutation(api.projects.assignTask);
+
+	const handleProjectChange = async (projectId: string | null) => {
+		try {
+			await assignToProject({ taskId: task.id, projectId });
+			setShowProjectPicker(false);
+		} catch (error) {
+			console.error("Failed to assign project:", error);
+		}
+	};
 
 	return (
 		<>
@@ -84,21 +100,70 @@ export function TaskDetailPanel({ task, project, agents, onClose }: TaskDetailPa
 								</div>
 							</Row>
 
-							{/* Project */}
+							{/* Project - with picker */}
 							<Row label="Project">
-								{project ? (
-									<div className="flex items-center gap-2">
-										<span 
-											className="w-3 h-3 rounded-sm" 
-											style={{ backgroundColor: project.color }}
-										/>
-										<span className="text-[13px]" style={{ color: project.color }}>
-											{project.name}
-										</span>
-									</div>
-								) : (
-									<span className="text-[13px] text-[--text-muted]">No project</span>
-								)}
+								<div className="relative">
+									<button
+										onClick={() => setShowProjectPicker(!showProjectPicker)}
+										className="flex items-center gap-2 px-2 py-1 -mx-2 -my-1 rounded hover:bg-white/5 transition-colors"
+									>
+										{project ? (
+											<>
+												<span 
+													className="w-3 h-3 rounded-sm" 
+													style={{ backgroundColor: project.color }}
+												/>
+												<span className="text-[13px]" style={{ color: project.color }}>
+													{project.name}
+												</span>
+											</>
+										) : (
+											<span className="text-[13px] text-[--text-muted]">No project</span>
+										)}
+										<ChevronIcon className="w-3 h-3 text-[--text-muted]" />
+									</button>
+
+									{/* Project picker dropdown */}
+									{showProjectPicker && (
+										<>
+											<div 
+												className="fixed inset-0 z-50" 
+												onClick={() => setShowProjectPicker(false)} 
+											/>
+											<div className="absolute right-0 top-full mt-1 z-50 py-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-md shadow-lg min-w-[180px]">
+												<button
+													onClick={() => handleProjectChange(null)}
+													className={cn(
+														"w-full px-3 py-1.5 text-left text-[13px] hover:bg-white/5",
+														!project ? "text-[--text-primary]" : "text-[--text-secondary]"
+													)}
+												>
+													No project
+												</button>
+												<div className="h-px bg-[#2a2a2a] my-1" />
+												{projects.map((p) => (
+													<button
+														key={p.id}
+														onClick={() => handleProjectChange(p.id)}
+														className={cn(
+															"w-full flex items-center gap-2 px-3 py-1.5 text-left text-[13px] hover:bg-white/5",
+															task.projectId === p.id ? "text-[--text-primary]" : "text-[--text-secondary]"
+														)}
+													>
+														<span 
+															className="w-3 h-3 rounded-sm" 
+															style={{ backgroundColor: p.color }}
+														/>
+														<span style={{ color: p.color }}>{p.name}</span>
+														{task.projectId === p.id && (
+															<CheckIcon className="w-3 h-3 ml-auto" />
+														)}
+													</button>
+												))}
+											</div>
+										</>
+									)}
+								</div>
 							</Row>
 
 							<Row label="Assignee">
@@ -201,4 +266,10 @@ function ExpandIcon() {
 }
 function CloseIcon() {
 	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="2"><path d="M4 4l8 8M12 4l-8 8" /></svg>;
+}
+function ChevronIcon({ className }: { className?: string }) {
+	return <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 6l3 3 3-3" /></svg>;
+}
+function CheckIcon({ className }: { className?: string }) {
+	return <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 8l4 4 6-7" /></svg>;
 }

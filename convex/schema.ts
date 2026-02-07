@@ -49,6 +49,7 @@ export default defineSchema({
 			v.literal("backlog"),
 			v.literal("todo"),
 			v.literal("in-progress"),
+			v.literal("blocked"),
 			v.literal("done"),
 			v.literal("canceled")
 		),

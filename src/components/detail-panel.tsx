@@ -15,6 +15,7 @@ const statusConfig: Record<Task["status"], { label: string; color: string; bg: s
 	backlog: { label: "Backlog", color: "text-zinc-400", bg: "bg-zinc-500/15" },
 	todo: { label: "Todo", color: "text-zinc-300", bg: "bg-zinc-500/20" },
 	"in-progress": { label: "In Progress", color: "text-yellow-400", bg: "bg-yellow-500/15" },
+	blocked: { label: "Blocked", color: "text-red-400", bg: "bg-red-500/15" },
 	done: { label: "Done", color: "text-green-400", bg: "bg-green-500/15" },
 	canceled: { label: "Canceled", color: "text-red-400", bg: "bg-red-500/15" },
 };

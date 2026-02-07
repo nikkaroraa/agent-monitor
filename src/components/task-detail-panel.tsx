@@ -19,6 +19,7 @@ const statusConfig: Record<Task["status"], { label: string; color: string; icon:
 	backlog: { label: "Backlog", color: "text-[--backlog]", icon: <BacklogIcon /> },
 	todo: { label: "Todo", color: "text-[--todo]", icon: <TodoIcon /> },
 	"in-progress": { label: "In Progress", color: "text-[--in-progress]", icon: <InProgressIcon /> },
+	blocked: { label: "Blocked", color: "text-red-500", icon: <BlockedIcon /> },
 	done: { label: "Done", color: "text-[--done]", icon: <DoneIcon /> },
 	canceled: { label: "Canceled", color: "text-[--canceled]", icon: <CanceledIcon /> },
 };
@@ -356,6 +357,9 @@ function DoneIcon() {
 }
 function CanceledIcon() {
 	return <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" /><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
+}
+function BlockedIcon() {
+	return <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" /><path d="M6 6l4 4M10 6l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>;
 }
 function ExpandIcon() {
 	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5"><path d="M10 2h4v4M6 14H2v-4M14 2L9 7M2 14l5-5" /></svg>;

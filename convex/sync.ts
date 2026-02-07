@@ -75,7 +75,8 @@ export const syncTasks = mutation({
 					v.literal("todo"),
 					v.literal("in-progress"),
 					v.literal("done"),
-					v.literal("canceled")
+					v.literal("blocked"),
+				v.literal("canceled")
 				),
 				priority: v.union(
 					v.literal("urgent"),
@@ -229,7 +230,8 @@ export const fullSync = mutation({
 					v.literal("todo"),
 					v.literal("in-progress"),
 					v.literal("done"),
-					v.literal("canceled")
+					v.literal("blocked"),
+				v.literal("canceled")
 				),
 				priority: v.union(
 					v.literal("urgent"),

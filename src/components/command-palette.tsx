@@ -289,6 +289,15 @@ function StatusIcon({ status }: { status: Task["status"] }) {
 			),
 			color: "text-green-500"
 		},
+		blocked: { 
+			icon: (
+				<>
+					<circle cx="6" cy="6" r="5" strokeWidth="1.5" fill="none" />
+					<path d="M4 4l4 4M8 4l-4 4" strokeWidth="1.5" strokeLinecap="round" />
+				</>
+			),
+			color: "text-red-500"
+		},
 		canceled: { 
 			icon: (
 				<>

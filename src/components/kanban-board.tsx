@@ -11,11 +11,12 @@ interface KanbanBoardProps {
 	onSelectTask: (id: string) => void;
 }
 
-type Status = "backlog" | "todo" | "in-progress" | "done" | "canceled";
+type Status = "backlog" | "todo" | "in-progress" | "blocked" | "done" | "canceled";
 
-const COLUMNS: { id: Status; label: string }[] = [
+const COLUMNS: { id: Status; label: string; color?: string }[] = [
 	{ id: "todo", label: "Todo" },
 	{ id: "in-progress", label: "In Progress" },
+	{ id: "blocked", label: "Blocked", color: "#ef4444" },
 	{ id: "done", label: "Done" },
 ];
 
@@ -32,7 +33,7 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 	}, [tasks, selectedAgent, selectedProject]);
 
 	const grouped = useMemo(() => {
-		const g: Record<Status, Task[]> = { backlog: [], todo: [], "in-progress": [], done: [], canceled: [] };
+		const g: Record<Status, Task[]> = { backlog: [], todo: [], "in-progress": [], blocked: [], done: [], canceled: [] };
 		for (const t of filteredTasks) g[t.status as Status]?.push(t);
 		return g;
 	}, [filteredTasks]);
@@ -51,7 +52,8 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 					<Column 
 						key={col.id} 
 						status={col.id} 
-						label={col.label} 
+						label={col.label}
+						color={col.color}
 						tasks={grouped[col.id]} 
 						projectMap={projectMap}
 						onSelectTask={onSelectTask}
@@ -62,20 +64,28 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 	);
 }
 
-function Column({ status, label, tasks, projectMap, onSelectTask }: { 
+function Column({ status, label, color, tasks, projectMap, onSelectTask }: { 
 	status: Status; 
-	label: string; 
+	label: string;
+	color?: string;
 	tasks: Task[]; 
 	projectMap: Record<string, Project>;
 	onSelectTask: (id: string) => void;
 }) {
+	const isBlocked = status === "blocked";
+	
 	return (
-		<div className="w-[320px] flex-shrink-0 flex flex-col">
+		<div className={`w-[320px] flex-shrink-0 flex flex-col ${isBlocked ? "bg-red-500/5 rounded-lg" : ""}`}>
 			{/* Column header - Linear style */}
 			<div className="flex items-center justify-between px-2 py-2 mb-2">
 				<div className="flex items-center gap-2">
 					<StatusIcon status={status} size={14} />
-					<span className="text-[13px] font-medium text-[#e8e8e8]">{label}</span>
+					<span 
+						className="text-[13px] font-medium"
+						style={{ color: color || "#e8e8e8" }}
+					>
+						{label}
+					</span>
 					<span className="text-[13px] text-[#555] ml-0.5">{tasks.length}</span>
 				</div>
 				<div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -104,10 +114,16 @@ function Column({ status, label, tasks, projectMap, onSelectTask }: {
 }
 
 function TaskCard({ task, project, onClick }: { task: Task; project?: Project; onClick: () => void }) {
+	const isBlocked = task.status === "blocked";
+	
 	return (
 		<div 
 			onClick={onClick}
-			className="group bg-[#121212] border border-[#262626] rounded-md p-3 cursor-pointer hover:bg-[#1a1a1a] hover:border-[#333] transition-colors min-h-[80px]"
+			className={`group rounded-md p-3 cursor-pointer transition-colors min-h-[80px] ${
+				isBlocked 
+					? "bg-red-500/10 border border-red-500/30 hover:bg-red-500/15 hover:border-red-500/50 opacity-90" 
+					: "bg-[#121212] border border-[#262626] hover:bg-[#1a1a1a] hover:border-[#333]"
+			}`}
 		>
 			{/* Row 1: Task ID + Avatar */}
 			<div className="flex items-center justify-between mb-1.5">
@@ -171,6 +187,7 @@ function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 	const colors: Record<string, string> = {
 		todo: "#666666",
 		"in-progress": "#f5a623",
+		blocked: "#ef4444",
 		done: "#22c55e",
 		backlog: "#555555",
 	};
@@ -188,6 +205,13 @@ function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
 					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
 					<path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke={color} strokeWidth={sw} strokeLinecap="round" />
+				</svg>
+			);
+		case "blocked":
+			return (
+				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
+					<path d="M6 6l4 4M10 6l-4 4" stroke={color} strokeWidth={sw} strokeLinecap="round" />
 				</svg>
 			);
 		case "done":

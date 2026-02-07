@@ -45,6 +45,17 @@ const statusConfig: Record<Task["status"], { icon: React.ReactNode; color: strin
 		label: "Done",
 		bg: "bg-green-500/15"
 	},
+	blocked: { 
+		icon: (
+			<>
+				<circle cx="6" cy="6" r="5" strokeWidth="1.5" fill="none" />
+				<path d="M4 4l4 4M8 4l-4 4" strokeWidth="1.5" strokeLinecap="round" />
+			</>
+		),
+		color: "text-red-500", 
+		label: "Blocked",
+		bg: "bg-red-500/15"
+	},
 	canceled: { 
 		icon: (
 			<>

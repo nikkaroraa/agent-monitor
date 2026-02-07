@@ -8,6 +8,7 @@ import { LinearSidebar } from "./linear-sidebar";
 import { LinearHeader } from "./linear-header";
 import { KanbanBoard } from "./kanban-board";
 import { TaskDetailPanel } from "./task-detail-panel";
+import { AgentDetailPanel } from "./agent-detail-panel";
 import { CreateProjectDialog } from "./create-project-dialog";
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -20,6 +21,7 @@ export function Dashboard() {
 	const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 	const [selectedProject, setSelectedProject] = useState<string | null>(null);
 	const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+	const [viewingAgentId, setViewingAgentId] = useState<string | null>(null);
 	const [currentFilter, setCurrentFilter] = useState<ViewFilter>("all");
 	const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
@@ -102,6 +104,23 @@ export function Dashboard() {
 		return true;
 	}) ?? [];
 
+	// Handle agent selection - single click filters, double click opens detail
+	const handleAgentSelect = (id: string | null) => {
+		if (id === selectedAgent && id !== null) {
+			// Double click - open detail panel
+			setViewingAgentId(id);
+		} else {
+			// Single click - filter
+			setSelectedAgent(id);
+			setSelectedProject(null);
+		}
+	};
+
+	// View agent detail (from context menu or explicit action)
+	const handleViewAgent = (id: string) => {
+		setViewingAgentId(id);
+	};
+
 	if (isLoading || !data) {
 		return (
 			<div className="h-screen flex items-center justify-center bg-[--bg]">
@@ -131,9 +150,10 @@ export function Dashboard() {
 				projects={data.projects}
 				selectedAgent={selectedAgent}
 				selectedProject={selectedProject}
-				onSelectAgent={setSelectedAgent}
-				onSelectProject={setSelectedProject}
+				onSelectAgent={handleAgentSelect}
+				onSelectProject={(id) => { setSelectedProject(id); setSelectedAgent(null); }}
 				onCreateProject={() => setCreateProjectOpen(true)}
+				onViewAgent={handleViewAgent}
 			/>
 
 			{/* Main */}
@@ -151,13 +171,21 @@ export function Dashboard() {
 				/>
 			</div>
 
-			{/* Detail panel */}
+			{/* Task detail panel */}
 			{selectedTask && (
 				<TaskDetailPanel
 					task={selectedTask}
 					project={data.projects.find(p => p.id === selectedTask.projectId)}
 					agents={data.agents}
 					onClose={() => setSelectedTaskId(null)}
+				/>
+			)}
+
+			{/* Agent detail panel */}
+			{viewingAgentId && (
+				<AgentDetailPanel
+					agentId={viewingAgentId}
+					onClose={() => setViewingAgentId(null)}
 				/>
 			)}
 

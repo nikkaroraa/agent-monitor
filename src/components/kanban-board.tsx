@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import type { Task } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface KanbanBoardProps {
 	tasks: Task[];
@@ -10,63 +9,35 @@ interface KanbanBoardProps {
 	onSelectTask: (id: string) => void;
 }
 
-type ColumnStatus = "backlog" | "todo" | "in-progress" | "done" | "canceled";
+type Status = "backlog" | "todo" | "in-progress" | "done" | "canceled";
 
-const COLUMNS: { id: ColumnStatus; label: string; icon: React.ReactNode }[] = [
-	{ 
-		id: "todo", 
-		label: "Todo", 
-		icon: <TodoIcon /> 
-	},
-	{ 
-		id: "in-progress", 
-		label: "In Progress", 
-		icon: <InProgressIcon /> 
-	},
-	{ 
-		id: "done", 
-		label: "Done", 
-		icon: <DoneIcon /> 
-	},
+const COLUMNS: { id: Status; label: string }[] = [
+	{ id: "todo", label: "Todo" },
+	{ id: "in-progress", label: "In Progress" },
+	{ id: "done", label: "Done" },
 ];
 
 export function KanbanBoard({ tasks, selectedAgent, onSelectTask }: KanbanBoardProps) {
-	// Filter tasks by selected agent
 	const filteredTasks = useMemo(() => {
 		if (!selectedAgent) return tasks;
 		return tasks.filter(t => t.assignee === selectedAgent);
 	}, [tasks, selectedAgent]);
 
-	// Group tasks by status
-	const tasksByStatus = useMemo(() => {
-		const grouped: Record<ColumnStatus, Task[]> = {
-			backlog: [],
-			todo: [],
-			"in-progress": [],
-			done: [],
-			canceled: [],
-		};
-		
-		for (const task of filteredTasks) {
-			const status = task.status as ColumnStatus;
-			if (grouped[status]) {
-				grouped[status].push(task);
-			}
-		}
-		
-		return grouped;
+	const grouped = useMemo(() => {
+		const g: Record<Status, Task[]> = { backlog: [], todo: [], "in-progress": [], done: [], canceled: [] };
+		for (const t of filteredTasks) g[t.status as Status]?.push(t);
+		return g;
 	}, [filteredTasks]);
 
 	return (
-		<div className="flex-1 overflow-x-auto">
-			<div className="flex gap-0 min-w-max h-full">
-				{COLUMNS.map((column) => (
-					<KanbanColumn
-						key={column.id}
-						id={column.id}
-						label={column.label}
-						icon={column.icon}
-						tasks={tasksByStatus[column.id]}
+		<div className="flex-1 overflow-x-auto bg-[--bg]">
+			<div className="flex h-full">
+				{COLUMNS.map((col) => (
+					<Column 
+						key={col.id} 
+						status={col.id} 
+						label={col.label} 
+						tasks={grouped[col.id]} 
 						onSelectTask={onSelectTask}
 					/>
 				))}
@@ -75,46 +46,35 @@ export function KanbanBoard({ tasks, selectedAgent, onSelectTask }: KanbanBoardP
 	);
 }
 
-function KanbanColumn({ 
-	id, 
-	label, 
-	icon, 
-	tasks, 
-	onSelectTask 
-}: { 
-	id: ColumnStatus;
+function Column({ status, label, tasks, onSelectTask }: { 
+	status: Status; 
 	label: string; 
-	icon: React.ReactNode;
-	tasks: Task[];
+	tasks: Task[]; 
 	onSelectTask: (id: string) => void;
 }) {
 	return (
-		<div className="w-[300px] flex-shrink-0 border-r border-[--linear-border] flex flex-col">
+		<div className="w-[340px] flex-shrink-0 flex flex-col border-r border-[#1a1a1a]">
 			{/* Column header */}
-			<div className="flex items-center justify-between px-3 py-2.5 border-b border-[--linear-border]">
+			<div className="flex items-center justify-between px-4 py-3">
 				<div className="flex items-center gap-2">
-					<span className="text-[--linear-text-secondary]">{icon}</span>
-					<span className="text-sm font-medium text-[--linear-text]">{label}</span>
-					<span className="text-sm text-[--linear-text-muted]">{tasks.length}</span>
+					<StatusIcon status={status} size={16} />
+					<span className="text-[14px] font-medium text-[--text-primary]">{label}</span>
+					<span className="text-[14px] text-[--text-muted] ml-1">{tasks.length}</span>
 				</div>
 				<div className="flex items-center gap-1">
-					<button className="p-1 hover:bg-white/5 rounded transition-colors">
-						<MoreHorizontalIcon className="w-4 h-4 text-[--linear-text-muted]" />
+					<button className="p-1.5 hover:bg-white/5 rounded">
+						<DotsIcon />
 					</button>
-					<button className="p-1 hover:bg-white/5 rounded transition-colors">
-						<PlusIcon className="w-4 h-4 text-[--linear-text-muted]" />
+					<button className="p-1.5 hover:bg-white/5 rounded">
+						<PlusIcon />
 					</button>
 				</div>
 			</div>
 
 			{/* Cards */}
-			<div className="flex-1 overflow-y-auto p-2 space-y-2">
+			<div className="flex-1 overflow-y-auto px-2 pb-4 space-y-2">
 				{tasks.map((task) => (
-					<TaskCard 
-						key={task.id} 
-						task={task} 
-						onClick={() => onSelectTask(task.id)}
-					/>
+					<TaskCard key={task.id} task={task} onClick={() => onSelectTask(task.id)} />
 				))}
 			</div>
 		</div>
@@ -122,175 +82,138 @@ function KanbanColumn({
 }
 
 function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
-	const StatusIcon = getStatusIcon(task.status);
-	
 	return (
 		<div 
 			onClick={onClick}
-			className="p-3 bg-[--linear-card] rounded-md border border-[--linear-border-subtle] hover:border-[--linear-border] hover:bg-[--linear-card-hover] cursor-pointer transition-all group"
+			className="bg-[--card-bg] border border-[--card-border] rounded-md p-4 cursor-pointer hover:bg-[--card-hover] transition-colors"
 		>
-			{/* Task ID */}
-			<div className="flex items-center justify-between mb-1.5">
-				<span className="text-xs text-[--linear-text-muted] font-mono">
-					{task.id.toUpperCase()}
+			{/* Row 1: Task ID + Avatar */}
+			<div className="flex items-center justify-between mb-2">
+				<span className="text-[11px] text-[--text-muted] tracking-wide">
+					{task.id.toUpperCase().replace("TASK-", "TASK-")}
 				</span>
-				<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-					<AssigneeAvatar assignee={task.assignee} />
-				</div>
+				<AssigneeIcon assignee={task.assignee} />
 			</div>
 
-			{/* Title row */}
-			<div className="flex items-start gap-2">
+			{/* Row 2: Status + Title */}
+			<div className="flex items-start gap-2 mb-3">
 				<span className="mt-0.5 flex-shrink-0">
-					<StatusIcon />
+					<StatusIcon status={task.status} size={16} />
 				</span>
-				<span className="text-sm text-[--linear-text] leading-snug">
+				<span className="text-[14px] text-[--text-primary] leading-snug">
 					{task.title}
 				</span>
 			</div>
 
-			{/* Meta row */}
-			<div className="flex items-center gap-2 mt-2">
-				<button className="text-[--linear-text-muted] hover:text-[--linear-text-secondary] transition-colors">
-					<MoreHorizontalIcon className="w-3.5 h-3.5" />
+			{/* Row 3: Actions + Date badge */}
+			<div className="flex items-center gap-2 mb-3">
+				<button className="px-1.5 py-1 text-[--text-muted] hover:text-[--text-secondary] hover:bg-white/5 rounded text-xs">
+					···
 				</button>
 				{task.completedAt && (
-					<span className="flex items-center gap-1 text-xs text-[--linear-text-muted]">
-						<CalendarIcon className="w-3 h-3" />
-						{formatDate(task.completedAt)}
-					</span>
+					<DateBadge date={task.completedAt} />
 				)}
 			</div>
 
-			{/* Created date */}
-			<div className="mt-2 pt-2 border-t border-[--linear-border-subtle]">
-				<span className="text-xs text-[--linear-text-muted]">
-					Created {task.createdAt ? formatDate(task.createdAt) : "recently"}
-				</span>
+			{/* Row 4: Created footer */}
+			<div className="text-[11px] text-[--text-faint]">
+				Created {formatCreatedDate(task.createdAt)}
 			</div>
 		</div>
 	);
 }
 
-function AssigneeAvatar({ assignee }: { assignee: string }) {
-	const agentEmojis: Record<string, string> = {
-		main: "🧠",
-		builder: "🔨",
-		trader: "📈",
-		watcher: "👁️",
-		director: "🎬",
-		analyst: "📊",
-		"job-hunt": "💼",
-		clawink: "✍️",
-		kat: "🐱",
-	};
+function StatusIcon({ status, size = 16 }: { status: string; size?: number }) {
+	const s = size;
+	const sw = 1.5;
+	
+	switch (status) {
+		case "todo":
+			return (
+				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+					<circle cx="8" cy="8" r="6" stroke="var(--todo)" strokeWidth={sw} />
+				</svg>
+			);
+		case "in-progress":
+			return (
+				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+					<circle cx="8" cy="8" r="6" stroke="var(--in-progress)" strokeWidth={sw} />
+					<path d="M8 2 A6 6 0 0 1 14 8" stroke="var(--in-progress)" strokeWidth={sw} strokeLinecap="round" />
+				</svg>
+			);
+		case "done":
+			return (
+				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+					<circle cx="8" cy="8" r="6" stroke="var(--done)" strokeWidth={sw} />
+					<path d="M5 8l2 2 4-4" stroke="var(--done)" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+				</svg>
+			);
+		case "backlog":
+			return (
+				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+					<circle cx="8" cy="8" r="6" stroke="var(--backlog)" strokeWidth={sw} strokeDasharray="2 2" />
+				</svg>
+			);
+		default:
+			return (
+				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
+					<circle cx="8" cy="8" r="6" stroke="var(--todo)" strokeWidth={sw} />
+				</svg>
+			);
+	}
+}
 
+function AssigneeIcon({ assignee }: { assignee: string }) {
+	const emojis: Record<string, string> = {
+		main: "🧠", builder: "🔨", trader: "📈", watcher: "👁️",
+		director: "🎬", analyst: "📊", "job-hunt": "💼", clawink: "✍️", kat: "🐱",
+	};
+	
 	return (
 		<div 
-			className="w-5 h-5 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-[10px]"
+			className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[10px]"
 			title={assignee}
 		>
-			{agentEmojis[assignee] || assignee.charAt(0).toUpperCase()}
+			{emojis[assignee] || assignee.charAt(0).toUpperCase()}
 		</div>
 	);
 }
 
-function getStatusIcon(status: Task["status"]) {
-	switch (status) {
-		case "backlog":
-			return BacklogIcon;
-		case "todo":
-			return TodoIcon;
-		case "in-progress":
-			return InProgressIcon;
-		case "done":
-			return DoneIcon;
-		case "canceled":
-			return CanceledIcon;
-		default:
-			return TodoIcon;
-	}
-}
-
-function formatDate(dateStr: string): string {
-	const date = new Date(dateStr);
-	const now = new Date();
-	const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+function DateBadge({ date }: { date: string }) {
+	const d = new Date(date);
+	const formatted = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
 	
-	if (diffDays === 0) return "today";
-	if (diffDays === 1) return "yesterday";
-	if (diffDays < 7) return `${diffDays} days ago`;
-	
-	return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+	return (
+		<span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#1a1a1a] rounded text-[11px] text-[--text-muted]">
+			<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+				<rect x="2" y="3" width="12" height="11" rx="1" />
+				<path d="M5 1v3M11 1v3M2 7h12" />
+			</svg>
+			{formatted}
+		</span>
+	);
 }
 
-// Status icons
-function BacklogIcon() {
+function DotsIcon() {
 	return (
-		<svg className="w-4 h-4 text-[--linear-backlog]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-muted)">
+			<circle cx="3" cy="8" r="1.2" />
+			<circle cx="8" cy="8" r="1.2" />
+			<circle cx="13" cy="8" r="1.2" />
 		</svg>
 	);
 }
 
-function TodoIcon() {
+function PlusIcon() {
 	return (
-		<svg className="w-4 h-4 text-[--linear-todo]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+			<path d="M8 3v10M3 8h10" />
 		</svg>
 	);
 }
 
-function InProgressIcon() {
-	return (
-		<svg className="w-4 h-4 text-[--linear-in-progress]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-			<path d="M8 2a6 6 0 016 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-		</svg>
-	);
-}
-
-function DoneIcon() {
-	return (
-		<svg className="w-4 h-4 text-[--linear-done]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-			<path d="M5.5 8l2 2 3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-		</svg>
-	);
-}
-
-function CanceledIcon() {
-	return (
-		<svg className="w-4 h-4 text-[--linear-canceled]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-			<path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-		</svg>
-	);
-}
-
-function MoreHorizontalIcon({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" fill="currentColor">
-			<circle cx="5" cy="12" r="1.5" />
-			<circle cx="12" cy="12" r="1.5" />
-			<circle cx="19" cy="12" r="1.5" />
-		</svg>
-	);
-}
-
-function PlusIcon({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<path d="M12 5v14M5 12h14" />
-		</svg>
-	);
-}
-
-function CalendarIcon({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<rect x="3" y="4" width="18" height="18" rx="2" />
-			<path d="M16 2v4M8 2v4M3 10h18" />
-		</svg>
-	);
+function formatCreatedDate(dateStr?: string): string {
+	if (!dateStr) return "recently";
+	const d = new Date(dateStr);
+	return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }

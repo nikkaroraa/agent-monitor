@@ -3,30 +3,28 @@
 @tailwind utilities;
 
 :root {
-  /* Linear exact colors */
-  --linear-bg: #0a0a0a;
-  --linear-sidebar: #0d0d0d;
-  --linear-card: #161616;
-  --linear-card-hover: #1a1a1a;
-  --linear-border: #1f1f1f;
-  --linear-border-subtle: #171717;
+  /* Linear exact colors - matched from screenshot */
+  --bg: #0a0a0a;
+  --card-bg: #141414;
+  --card-border: #1e1e1e;
+  --card-hover: #1a1a1a;
   
-  /* Text */
-  --linear-text: #f5f5f5;
-  --linear-text-secondary: #9b9b9b;
-  --linear-text-muted: #666666;
-  
-  /* Accent */
-  --linear-purple: #5e6ad2;
-  --linear-purple-hover: #6e7ae2;
-  --linear-selected: rgba(94, 106, 210, 0.15);
+  /* Text colors */
+  --text-primary: #e8e8e8;
+  --text-secondary: #8a8a8a;
+  --text-muted: #5a5a5a;
+  --text-faint: #3a3a3a;
   
   /* Status colors */
-  --linear-todo: #9b9b9b;
-  --linear-in-progress: #f5a623;
-  --linear-done: #5fb56d;
-  --linear-backlog: #666666;
-  --linear-canceled: #e55c5c;
+  --todo: #8a8a8a;
+  --in-progress: #f5a524;
+  --done: #4ade80;
+  --backlog: #5a5a5a;
+  --canceled: #ef4444;
+  
+  /* Accent */
+  --accent: #5e6ad2;
+  --selected: rgba(94, 106, 210, 0.12);
 }
 
 * {
@@ -36,76 +34,38 @@
 }
 
 body {
-  background: var(--linear-bg);
-  color: var(--linear-text);
+  background: var(--bg);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar - Linear minimal style */
+/* Minimal scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: #2a2a2a;
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Selection */
-::selection {
-  background: var(--linear-purple);
-  color: white;
-}
-
-/* Focus */
-*:focus-visible {
-  outline: 2px solid var(--linear-purple);
-  outline-offset: 1px;
+  background: #3a3a3a;
 }
 
 @layer base {
   :root {
     --background: 0 0% 4%;
-    --foreground: 0 0% 96%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 96%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 234 58% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 96%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 96%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --foreground: 0 0% 91%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 91%;
     --border: 0 0% 12%;
-    --input: 0 0% 12%;
     --ring: 234 58% 60%;
-    --radius: 0.375rem;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
+    --radius: 0.25rem;
   }
 }

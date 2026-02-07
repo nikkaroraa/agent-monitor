@@ -11,97 +11,84 @@ interface LinearHeaderProps {
 
 export function LinearHeader({ currentFilter, onFilterChange }: LinearHeaderProps) {
 	return (
-		<header className="border-b border-[--linear-border] bg-[--linear-bg]">
-			{/* Top bar with tabs */}
+		<header className="bg-[--bg] border-b border-[#1a1a1a]">
+			{/* Filter tabs row */}
 			<div className="flex items-center justify-between px-4 py-2">
 				<div className="flex items-center gap-1">
-					{/* Filter tabs */}
-					<FilterTab 
-						icon={<AllIssuesIcon />}
-						label="All issues" 
-						active={currentFilter === "all"} 
+					<TabButton 
+						active={currentFilter === "all"}
 						onClick={() => onFilterChange("all")}
+						icon={<AllIcon />}
+						label="All issues"
 					/>
-					<FilterTab 
-						icon={<ActiveIcon />}
-						label="Active" 
-						active={currentFilter === "active"} 
+					<TabButton 
+						active={currentFilter === "active"}
 						onClick={() => onFilterChange("active")}
+						icon={<ActiveIcon />}
+						label="Active"
 					/>
-					<FilterTab 
-						icon={<BacklogIcon />}
-						label="Backlog" 
-						active={currentFilter === "backlog"} 
+					<TabButton 
+						active={currentFilter === "backlog"}
 						onClick={() => onFilterChange("backlog")}
+						icon={<BacklogIcon />}
+						label="Backlog"
 					/>
-					
-					{/* Settings icon */}
-					<button className="p-1.5 ml-1 hover:bg-white/5 rounded transition-colors">
-						<SettingsIcon className="w-4 h-4 text-[--linear-text-muted]" />
+					<button className="p-2 hover:bg-white/5 rounded ml-1">
+						<SettingsIcon />
 					</button>
 				</div>
 
 				<div className="flex items-center gap-2">
-					{/* Notification */}
-					<button className="p-1.5 hover:bg-white/5 rounded transition-colors">
-						<BellIcon className="w-4 h-4 text-[--linear-text-muted]" />
+					<button className="p-2 hover:bg-white/5 rounded">
+						<BellIcon />
 					</button>
-					
-					{/* Grid view */}
-					<button className="p-1.5 hover:bg-white/5 rounded border border-[--linear-border] transition-colors">
-						<GridIcon className="w-4 h-4 text-[--linear-text-muted]" />
+					<button className="p-2 hover:bg-white/5 rounded border border-[#2a2a2a]">
+						<GridIcon />
 					</button>
-					
-					{/* Display button */}
-					<button className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm text-[--linear-text-secondary] bg-[--linear-card] hover:bg-[--linear-card-hover] border border-[--linear-border] rounded transition-colors">
-						<DisplayIcon className="w-4 h-4" />
-						<span>Display</span>
+					<button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] rounded text-[13px] text-[--text-secondary]">
+						<DisplayIcon />
+						Display
 					</button>
 				</div>
 			</div>
 
-			{/* Filter bar */}
+			{/* Filter button row */}
 			<div className="px-4 py-2">
-				<button className="flex items-center gap-1.5 px-2 py-1 text-sm text-[--linear-text-secondary] hover:text-[--linear-text] hover:bg-white/5 rounded transition-colors">
-					<FilterIcon className="w-4 h-4" />
-					<span>Filter</span>
+				<button className="flex items-center gap-2 px-2 py-1.5 text-[13px] text-[--text-secondary] hover:text-[--text-primary] hover:bg-white/5 rounded">
+					<FilterIcon />
+					Filter
 				</button>
 			</div>
 		</header>
 	);
 }
 
-function FilterTab({ 
-	icon, 
-	label, 
-	active, 
-	onClick 
-}: { 
-	icon: React.ReactNode; 
-	label: string; 
+function TabButton({ active, onClick, icon, label }: { 
 	active: boolean; 
-	onClick: () => void;
+	onClick: () => void; 
+	icon: React.ReactNode;
+	label: string;
 }) {
 	return (
 		<button
 			onClick={onClick}
 			className={cn(
-				"flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full transition-colors",
+				"flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] transition-colors",
 				active 
-					? "bg-white/10 text-[--linear-text]" 
-					: "text-[--linear-text-secondary] hover:text-[--linear-text] hover:bg-white/5"
+					? "bg-[#222] text-[--text-primary]" 
+					: "text-[--text-secondary] hover:text-[--text-primary] hover:bg-white/5"
 			)}
 		>
 			{icon}
-			<span>{label}</span>
+			{label}
 		</button>
 	);
 }
 
 // Icons
-function AllIssuesIcon() {
+function AllIcon() {
 	return (
-		<svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
 			<rect x="2" y="2" width="5" height="5" rx="1" />
 			<rect x="9" y="2" width="5" height="5" rx="1" />
 			<rect x="2" y="9" width="5" height="5" rx="1" />
@@ -112,65 +99,65 @@ function AllIssuesIcon() {
 
 function ActiveIcon() {
 	return (
-		<svg className="w-4 h-4 text-[--linear-in-progress]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-			<path d="M8 2a6 6 0 016 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+			<circle cx="8" cy="8" r="5.5" stroke="var(--in-progress)" strokeWidth="1.5" />
+			<path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke="var(--in-progress)" strokeWidth="1.5" strokeLinecap="round" />
 		</svg>
 	);
 }
 
 function BacklogIcon() {
 	return (
-		<svg className="w-4 h-4 text-[--linear-backlog]" viewBox="0 0 16 16" fill="none">
-			<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+			<circle cx="8" cy="8" r="5.5" stroke="var(--backlog)" strokeWidth="1.5" strokeDasharray="2 2" />
 		</svg>
 	);
 }
 
-function SettingsIcon({ className }: { className?: string }) {
+function SettingsIcon() {
 	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<circle cx="12" cy="12" r="3" />
-			<path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.2">
+			<circle cx="8" cy="8" r="2" />
+			<path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.9 2.9l1.4 1.4M11.7 11.7l1.4 1.4M2.9 13.1l1.4-1.4M11.7 4.3l1.4-1.4" />
 		</svg>
 	);
 }
 
-function BellIcon({ className }: { className?: string }) {
+function BellIcon() {
 	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-			<path d="M13.73 21a2 2 0 01-3.46 0" />
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.2">
+			<path d="M12 6a4 4 0 00-8 0c0 4.5-2 6-2 6h12s-2-1.5-2-6" />
+			<path d="M9.2 13a1.4 1.4 0 01-2.4 0" />
 		</svg>
 	);
 }
 
-function GridIcon({ className }: { className?: string }) {
+function GridIcon() {
 	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<rect x="3" y="3" width="7" height="7" />
-			<rect x="14" y="3" width="7" height="7" />
-			<rect x="14" y="14" width="7" height="7" />
-			<rect x="3" y="14" width="7" height="7" />
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.2">
+			<rect x="2" y="2" width="5" height="5" />
+			<rect x="9" y="2" width="5" height="5" />
+			<rect x="2" y="9" width="5" height="5" />
+			<rect x="9" y="9" width="5" height="5" />
 		</svg>
 	);
 }
 
-function DisplayIcon({ className }: { className?: string }) {
+function DisplayIcon() {
 	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M4 6h16M4 12h16M4 18h16" />
-			<circle cx="8" cy="6" r="1" fill="currentColor" />
-			<circle cx="16" cy="12" r="1" fill="currentColor" />
-			<circle cx="12" cy="18" r="1" fill="currentColor" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+			<path d="M2 4h12M2 8h12M2 12h12" />
+			<circle cx="5" cy="4" r="1" fill="currentColor" />
+			<circle cx="11" cy="8" r="1" fill="currentColor" />
+			<circle cx="8" cy="12" r="1" fill="currentColor" />
 		</svg>
 	);
 }
 
-function FilterIcon({ className }: { className?: string }) {
+function FilterIcon() {
 	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M4 6h16M6 12h12M8 18h8" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
+			<path d="M2 4h12M4 8h8M6 12h4" />
 		</svg>
 	);
 }

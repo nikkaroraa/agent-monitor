@@ -11,138 +11,116 @@ interface LinearSidebarProps {
 }
 
 export function LinearSidebar({ agents, selectedAgent, onSelectAgent }: LinearSidebarProps) {
-	const [workspaceExpanded, setWorkspaceExpanded] = useState(true);
-	const [agentsExpanded, setAgentsExpanded] = useState(true);
+	const [workspaceOpen, setWorkspaceOpen] = useState(true);
+	const [agentsOpen, setAgentsOpen] = useState(true);
 
 	return (
-		<aside className="w-[220px] h-screen bg-[--linear-sidebar] border-r border-[--linear-border] flex flex-col select-none">
+		<aside className="w-[220px] h-screen bg-[#0d0d0d] border-r border-[#1a1a1a] flex flex-col">
 			{/* Header */}
-			<div className="h-11 flex items-center justify-between px-3 border-b border-[--linear-border]">
+			<div className="h-11 flex items-center justify-between px-3 border-b border-[#1a1a1a]">
 				<div className="flex items-center gap-2">
-					<div className="w-5 h-5 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-						<span className="text-[10px] font-bold text-white">N</span>
+					<div className="w-5 h-5 rounded bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center">
+						<span className="text-[9px] font-bold text-white">N</span>
 					</div>
-					<span className="text-sm font-medium text-[--linear-text]">nikhil</span>
-					<ChevronDown className="w-3 h-3 text-[--linear-text-muted]" />
+					<span className="text-[13px] font-medium">nikhil</span>
+					<ChevronIcon className="w-3 h-3 text-[--text-muted]" />
 				</div>
-				<div className="flex items-center gap-1">
-					<button className="p-1.5 hover:bg-white/5 rounded transition-colors">
-						<SearchIcon className="w-4 h-4 text-[--linear-text-muted]" />
+				<div className="flex items-center">
+					<button className="p-1.5 hover:bg-white/5 rounded">
+						<SearchIcon />
 					</button>
-					<button className="p-1.5 hover:bg-white/5 rounded transition-colors">
-						<EditIcon className="w-4 h-4 text-[--linear-text-muted]" />
+					<button className="p-1.5 hover:bg-white/5 rounded">
+						<EditIcon />
 					</button>
 				</div>
 			</div>
 
-			{/* Navigation */}
+			{/* Nav */}
 			<div className="flex-1 overflow-y-auto py-2">
-				{/* Main nav */}
+				{/* Main */}
 				<div className="px-2 space-y-0.5">
 					<NavItem icon={<InboxIcon />} label="Inbox" />
 					<NavItem icon={<UserIcon />} label="My issues" />
 				</div>
 
-				{/* Workspace section */}
-				<div className="mt-4">
-					<SectionHeader 
-						label="Workspace" 
-						expanded={workspaceExpanded} 
-						onToggle={() => setWorkspaceExpanded(!workspaceExpanded)} 
-					/>
-					{workspaceExpanded && (
-						<div className="px-2 space-y-0.5">
-							<NavItem icon={<FolderIcon />} label="Projects" />
-							<NavItem icon={<ViewIcon />} label="Views" />
-							<NavItem icon={<MoreIcon />} label="More" muted />
-						</div>
-					)}
-				</div>
+				{/* Workspace */}
+				<Section label="Workspace" open={workspaceOpen} onToggle={() => setWorkspaceOpen(!workspaceOpen)}>
+					<NavItem icon={<FolderIcon />} label="Projects" />
+					<NavItem icon={<ViewsIcon />} label="Views" />
+					<NavItem icon={<MoreIcon />} label="More" muted />
+				</Section>
 
-				{/* Agents section */}
-				<div className="mt-4">
-					<SectionHeader 
-						label="Your agents" 
-						expanded={agentsExpanded} 
-						onToggle={() => setAgentsExpanded(!agentsExpanded)} 
+				{/* Your teams / Agents */}
+				<Section label="Your agents" open={agentsOpen} onToggle={() => setAgentsOpen(!agentsOpen)}>
+					<NavItem 
+						icon={<span className="w-4 h-4 rounded bg-purple-600/30 flex items-center justify-center text-[8px]">🤖</span>}
+						label="All Agents"
+						selected={selectedAgent === null}
+						onClick={() => onSelectAgent(null)}
+						expandable
 					/>
-					{agentsExpanded && (
-						<div className="px-2 space-y-0.5">
-							{/* All issues */}
-							<NavItem 
-								icon={<span className="w-4 h-4 rounded bg-purple-500/20 flex items-center justify-center text-[10px]">🤖</span>}
-								label="All Agents"
-								selected={selectedAgent === null}
-								onClick={() => onSelectAgent(null)}
-								expandable
-							/>
-							{/* Individual agents */}
-							{agents.map((agent) => (
-								<NavItem
-									key={agent.id}
-									icon={<span className="text-sm">{agent.emoji}</span>}
-									label={agent.name}
-									selected={selectedAgent === agent.id}
-									onClick={() => onSelectAgent(agent.id)}
-									indent
-									badge={
-										<span className={cn(
-											"w-2 h-2 rounded-full",
-											agent.status === "active" && "bg-green-500",
-											agent.status === "idle" && "bg-yellow-500",
-											agent.status === "error" && "bg-red-500"
-										)} />
-									}
-								/>
-							))}
-						</div>
-					)}
-				</div>
+					{agents.map((agent) => (
+						<NavItem
+							key={agent.id}
+							icon={<span className="text-sm">{agent.emoji}</span>}
+							label={agent.name}
+							selected={selectedAgent === agent.id}
+							onClick={() => onSelectAgent(agent.id)}
+							indent
+							badge={
+								<span className={cn(
+									"w-1.5 h-1.5 rounded-full",
+									agent.status === "active" && "bg-green-500",
+									agent.status === "idle" && "bg-yellow-500",
+									agent.status === "error" && "bg-red-500"
+								)} />
+							}
+						/>
+					))}
+				</Section>
 
-				{/* Try section */}
-				<div className="mt-4">
-					<SectionHeader label="Try" expanded={true} onToggle={() => {}} />
-					<div className="px-2 space-y-0.5">
-						<NavItem icon={<PlusIcon />} label="Invite people" />
-						<NavItem icon={<InitiativesIcon />} label="Initiatives" />
-						<NavItem icon={<CyclesIcon />} label="Cycles" />
-						<NavItem icon={<GitHubIcon />} label="Link GitHub" />
-					</div>
-				</div>
+				{/* Try */}
+				<Section label="Try" open={true} onToggle={() => {}}>
+					<NavItem icon={<PlusIcon />} label="Invite people" />
+					<NavItem icon={<BoltIcon />} label="Initiatives" />
+					<NavItem icon={<CycleIcon />} label="Cycles" />
+					<NavItem icon={<GithubIcon />} label="Link GitHub" />
+				</Section>
 			</div>
 
 			{/* Footer */}
-			<div className="p-3 border-t border-[--linear-border]">
-				<div className="p-2 rounded bg-[--linear-card] text-xs">
-					<div className="text-[--linear-text-muted]">What's new</div>
-					<div className="text-[--linear-text-secondary] mt-0.5">Agent monitoring dashboard</div>
+			<div className="p-3 border-t border-[#1a1a1a]">
+				<div className="p-2 bg-[#141414] rounded text-[11px]">
+					<div className="text-[--text-muted]">What's new</div>
+					<div className="text-[--text-secondary] mt-0.5">Agent monitor for product management</div>
 				</div>
 			</div>
 		</aside>
 	);
 }
 
-function SectionHeader({ label, expanded, onToggle }: { label: string; expanded: boolean; onToggle: () => void }) {
+function Section({ label, open, onToggle, children }: { 
+	label: string; 
+	open: boolean; 
+	onToggle: () => void;
+	children: React.ReactNode;
+}) {
 	return (
-		<button 
-			onClick={onToggle}
-			className="w-full flex items-center gap-1 px-3 py-1.5 text-xs text-[--linear-text-muted] hover:text-[--linear-text-secondary] transition-colors"
-		>
-			<ChevronDown className={cn("w-3 h-3 transition-transform", !expanded && "-rotate-90")} />
-			<span>{label}</span>
-		</button>
+		<div className="mt-4">
+			<button 
+				onClick={onToggle}
+				className="w-full flex items-center gap-1 px-3 py-1.5 text-[11px] text-[--text-muted] hover:text-[--text-secondary]"
+			>
+				<ChevronIcon className={cn("w-3 h-3 transition-transform", !open && "-rotate-90")} />
+				{label}
+			</button>
+			{open && <div className="px-2 space-y-0.5">{children}</div>}
+		</div>
 	);
 }
 
 function NavItem({ 
-	icon, 
-	label, 
-	selected, 
-	onClick, 
-	muted, 
-	indent,
-	expandable,
-	badge
+	icon, label, selected, onClick, muted, indent, expandable, badge 
 }: { 
 	icon: React.ReactNode; 
 	label: string; 
@@ -157,124 +135,56 @@ function NavItem({
 		<button
 			onClick={onClick}
 			className={cn(
-				"w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors",
+				"w-full flex items-center gap-2 px-2 py-1.5 rounded text-[13px] transition-colors",
 				indent && "pl-6",
 				selected 
-					? "bg-[--linear-selected] text-[--linear-text]" 
-					: "text-[--linear-text-secondary] hover:bg-white/5 hover:text-[--linear-text]",
-				muted && "text-[--linear-text-muted]"
+					? "bg-[--selected] text-[--text-primary]" 
+					: "text-[--text-secondary] hover:bg-white/5 hover:text-[--text-primary]",
+				muted && "text-[--text-muted]"
 			)}
 		>
 			<span className="w-4 h-4 flex items-center justify-center">{icon}</span>
 			<span className="flex-1 text-left truncate">{label}</span>
 			{badge}
-			{expandable && <ChevronDown className="w-3 h-3 text-[--linear-text-muted]" />}
+			{expandable && <ChevronIcon className="w-3 h-3 text-[--text-muted]" />}
 		</button>
 	);
 }
 
-// Icons
-function ChevronDown({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<path d="M6 9l6 6 6-6" />
-		</svg>
-	);
+// Icons (compact)
+function ChevronIcon({ className }: { className?: string }) {
+	return <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 6l3 3 3-3" /></svg>;
 }
-
-function SearchIcon({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<circle cx="11" cy="11" r="8" />
-			<path d="M21 21l-4.35-4.35" />
-		</svg>
-	);
+function SearchIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5"><circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5L14 14" /></svg>;
 }
-
-function EditIcon({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-		</svg>
-	);
+function EditIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5"><path d="M9 3l4 4-7 7H2v-4l7-7zM11 5l2 2" /></svg>;
 }
-
 function InboxIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M22 12h-6l-2 3h-4l-2-3H2" />
-			<path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
-		</svg>
-	);
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M14 9h-4l-1 2H7L6 9H2" /><path d="M3.5 4L2 9v4a1 1 0 001 1h10a1 1 0 001-1V9l-1.5-5a1 1 0 00-1-.5h-8a1 1 0 00-1 .5z" /></svg>;
 }
-
 function UserIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<circle cx="12" cy="8" r="4" />
-			<path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-		</svg>
-	);
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><circle cx="8" cy="5" r="3" /><path d="M2.5 14c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5" /></svg>;
 }
-
 function FolderIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
-		</svg>
-	);
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M14 13H2a1 1 0 01-1-1V4a1 1 0 011-1h4l2 2h6a1 1 0 011 1v6a1 1 0 01-1 1z" /></svg>;
 }
-
-function ViewIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<rect x="3" y="3" width="7" height="7" />
-			<rect x="14" y="3" width="7" height="7" />
-			<rect x="14" y="14" width="7" height="7" />
-			<rect x="3" y="14" width="7" height="7" />
-		</svg>
-	);
+function ViewsIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><rect x="2" y="2" width="5" height="5" rx="0.5" /><rect x="9" y="2" width="5" height="5" rx="0.5" /><rect x="2" y="9" width="5" height="5" rx="0.5" /><rect x="9" y="9" width="5" height="5" rx="0.5" /></svg>;
 }
-
 function MoreIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<circle cx="12" cy="12" r="1" />
-			<circle cx="19" cy="12" r="1" />
-			<circle cx="5" cy="12" r="1" />
-		</svg>
-	);
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1" /><circle cx="8" cy="8" r="1" /><circle cx="13" cy="8" r="1" /></svg>;
 }
-
 function PlusIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-			<path d="M12 5v14M5 12h14" />
-		</svg>
-	);
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v10M3 8h10" /></svg>;
 }
-
-function InitiativesIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-		</svg>
-	);
+function BoltIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M9 1L3 9h5l-1 6 6-8H8l1-6z" /></svg>;
 }
-
-function CyclesIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-			<path d="M21 12a9 9 0 11-9-9" />
-			<path d="M21 3v6h-6" />
-		</svg>
-	);
+function CycleIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M14 8A6 6 0 112 8" /><path d="M14 4v4h-4" /></svg>;
 }
-
-function GitHubIcon() {
-	return (
-		<svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-			<path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-		</svg>
-	);
+function GithubIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" /></svg>;
 }

@@ -3,28 +3,25 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { DashboardData, View } from "@/lib/types";
-import { Sidebar } from "./sidebar";
-import { Header } from "./header";
-import { IssuesList } from "./issues-list";
-import { DetailPanel } from "./detail-panel";
-import { StatusBar } from "./status-bar";
-import { CommandPalette } from "./command-palette";
+import type { DashboardData, Task } from "@/lib/types";
+import { LinearSidebar } from "./linear-sidebar";
+import { LinearHeader } from "./linear-header";
+import { KanbanBoard } from "./kanban-board";
+import { TaskDetailPanel } from "./task-detail-panel";
 
 // Check if Convex is configured
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
+type ViewFilter = "all" | "active" | "backlog";
+
 export function Dashboard() {
 	const [fallbackData, setFallbackData] = useState<DashboardData | null>(null);
 	const [fallbackLoading, setFallbackLoading] = useState(!CONVEX_URL);
-	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 	const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-	const [currentView, setCurrentView] = useState<View>("all");
-	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+	const [currentFilter, setCurrentFilter] = useState<ViewFilter>("all");
 
-	// Convex real-time query (returns undefined while loading, null if error)
+	// Convex real-time query
 	const convexData = useQuery(api.dashboard.getData);
 
 	// Fallback fetch for non-Convex mode
@@ -43,7 +40,6 @@ export function Dashboard() {
 	// Trigger sync on mount if Convex is enabled
 	useEffect(() => {
 		if (CONVEX_URL) {
-			// Trigger a sync in the background
 			fetch("/api/sync", { method: "POST" }).catch(console.error);
 		}
 	}, []);
@@ -56,19 +52,6 @@ export function Dashboard() {
 			return () => clearInterval(interval);
 		}
 	}, [fetchData]);
-
-	// Global keyboard shortcuts
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-				e.preventDefault();
-				setCommandPaletteOpen(true);
-			}
-		};
-
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, []);
 
 	// Determine data source
 	const isConvexMode = !!CONVEX_URL;
@@ -103,27 +86,27 @@ export function Dashboard() {
 			}
 		: fallbackData;
 
-	// Manual refresh - triggers sync for Convex mode
-	const handleRefresh = useCallback(async () => {
-		if (isConvexMode) {
-			await fetch("/api/sync", { method: "POST" });
-		} else {
-			await fetchData();
+	// Filter tasks based on current filter
+	const filteredTasks = data?.tasks.filter((task) => {
+		if (currentFilter === "active") {
+			return task.status === "in-progress";
 		}
-	}, [isConvexMode, fetchData]);
+		if (currentFilter === "backlog") {
+			return task.status === "backlog" || task.status === "todo";
+		}
+		return true; // "all"
+	}) ?? [];
 
 	if (isLoading || !data) {
 		return (
-			<div className="h-screen flex items-center justify-center bg-[--bg-primary]">
+			<div className="h-screen flex items-center justify-center bg-[--linear-bg]">
 				<div className="flex flex-col items-center gap-4">
-					{/* Animated logo */}
 					<div className="relative">
-						<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[--accent] to-purple-600 flex items-center justify-center animate-pulse">
-							<span className="text-xl font-bold text-white">M</span>
+						<div className="w-10 h-10 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center animate-pulse">
+							<span className="text-lg font-bold text-white">M</span>
 						</div>
-						<div className="absolute inset-0 rounded-xl bg-[--accent] blur-xl opacity-30 animate-pulse" />
 					</div>
-					<div className="flex items-center gap-2 text-[--text-secondary]">
+					<div className="flex items-center gap-2 text-[--linear-text-secondary]">
 						<svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
 							<circle
 								className="opacity-25"
@@ -140,99 +123,55 @@ export function Dashboard() {
 								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
 							/>
 						</svg>
-						<span className="text-sm">
-							{isConvexMode ? "Connecting to Convex..." : "Loading Mission Control..."}
-						</span>
+						<span className="text-sm">Loading...</span>
 					</div>
 				</div>
 			</div>
 		);
 	}
 
-	const selectedTask = selectedTaskId ? data.tasks.find((t) => t.id === selectedTaskId) || null : null;
+	const selectedTask = selectedTaskId 
+		? data.tasks.find((t) => t.id === selectedTaskId) || null 
+		: null;
 
 	return (
-		<div className="h-screen flex flex-col bg-[--bg-primary] overflow-hidden">
-			{/* Command Palette */}
-			<CommandPalette
-				open={commandPaletteOpen}
-				onOpenChange={setCommandPaletteOpen}
+		<div className="h-screen flex bg-[--linear-bg] overflow-hidden">
+			{/* Sidebar */}
+			<LinearSidebar
 				agents={data.agents}
-				tasks={data.tasks}
-				onSelectAgent={(id) => setSelectedAgent(id)}
-				onSelectTask={(id) => setSelectedTaskId(id)}
-				onChangeView={setCurrentView}
-			/>
-
-			{/* Header */}
-			<Header 
-				onOpenCommandPalette={() => setCommandPaletteOpen(true)} 
-				onRefresh={handleRefresh}
-				onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
-				mobileMenuOpen={mobileMenuOpen}
+				selectedAgent={selectedAgent}
+				onSelectAgent={setSelectedAgent}
 			/>
 
 			{/* Main content */}
-			<div className="flex-1 flex overflow-hidden relative">
-				{/* Mobile sidebar overlay */}
-				{mobileMenuOpen && (
-					<div 
-						className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-						onClick={() => setMobileMenuOpen(false)}
-					/>
-				)}
-
-				{/* Sidebar - hidden on mobile unless menu open */}
-				<div className={`
-					fixed md:relative inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-out
-					${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-				`}>
-					<Sidebar
-						agents={data.agents}
-						selectedAgent={selectedAgent}
-						onSelectAgent={(id) => {
-							setSelectedAgent(id);
-							setMobileMenuOpen(false);
-						}}
-						currentView={currentView}
-						onChangeView={(view) => {
-							setCurrentView(view);
-							setMobileMenuOpen(false);
-						}}
-						collapsed={sidebarCollapsed}
-						onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-					/>
-				</div>
-
-				{/* Issues list */}
-				<IssuesList
-					tasks={data.tasks}
-					currentView={currentView}
-					selectedAgent={selectedAgent}
-					selectedTaskId={selectedTaskId}
-					onSelectTask={setSelectedTaskId}
+			<div className="flex-1 flex flex-col overflow-hidden">
+				{/* Header */}
+				<LinearHeader 
+					currentFilter={currentFilter}
+					onFilterChange={setCurrentFilter}
 				/>
 
-				{/* Detail panel */}
-				<DetailPanel 
-					task={selectedTask} 
-					agents={data.agents} 
-					onClose={() => setSelectedTaskId(null)} 
+				{/* Kanban board */}
+				<KanbanBoard
+					tasks={filteredTasks}
+					selectedAgent={selectedAgent}
+					onSelectTask={setSelectedTaskId}
 				/>
 			</div>
 
-			{/* Status bar */}
-			<StatusBar 
-				agents={data.agents} 
-				selectedAgent={selectedAgent} 
-				lastUpdated={data.lastUpdated}
-				isConvex={isConvexMode}
-			/>
+			{/* Detail panel */}
+			{selectedTask && (
+				<TaskDetailPanel
+					task={selectedTask}
+					agents={data.agents}
+					onClose={() => setSelectedTaskId(null)}
+				/>
+			)}
 		</div>
 	);
 }
 
-// Convex-powered dashboard wrapper (legacy, now integrated)
+// Legacy export
 export function ConvexDashboard() {
 	return <Dashboard />;
 }

@@ -314,3 +314,19 @@ export const fullSync = mutation({
 		};
 	},
 });
+
+// Delete an agent by ID
+export const deleteAgent = mutation({
+  args: { agentId: v.string() },
+  handler: async (ctx, args) => {
+    const agent = await ctx.db
+      .query("agents")
+      .filter((q) => q.eq(q.field("agentId"), args.agentId))
+      .first();
+    if (agent) {
+      await ctx.db.delete(agent._id);
+      return { deleted: true, agentId: args.agentId };
+    }
+    return { deleted: false, agentId: args.agentId };
+  },
+});

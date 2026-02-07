@@ -34,10 +34,12 @@ interface AgentDetailPanelProps {
 	onClose: () => void;
 }
 
+type TabId = "soul" | "identity" | "memory" | "tasks";
+
 export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 	const [agent, setAgent] = useState<AgentDetail | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState<"soul" | "identity" | "tasks">("soul");
+	const [activeTab, setActiveTab] = useState<TabId>("soul");
 
 	useEffect(() => {
 		async function fetchAgent() {
@@ -53,11 +55,10 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 				setLoading(false);
 			}
 		}
-
 		fetchAgent();
 	}, [agentId]);
 
-	// Handle escape key
+	// Escape key handler
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
@@ -69,14 +70,11 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 	if (loading) {
 		return (
 			<>
-				<div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-				<div className="fixed right-0 top-0 bottom-0 w-[520px] bg-[#0d0d0d] border-l border-[#1a1a1a] z-50 flex items-center justify-center">
-					<div className="flex items-center gap-2 text-[--text-secondary]">
-						<svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-							<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
-							<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-						</svg>
-						<span className="text-sm">Loading...</span>
+				<div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+				<div className="fixed right-0 top-0 bottom-0 w-[520px] bg-[#0a0a0a] border-l border-[#1f1f1f] z-50 flex items-center justify-center">
+					<div className="flex items-center gap-2 text-[#666]">
+						<LoadingSpinner />
+						<span className="text-[13px]">Loading...</span>
 					</div>
 				</div>
 			</>
@@ -86,53 +84,65 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 	if (!agent) {
 		return (
 			<>
-				<div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-				<div className="fixed right-0 top-0 bottom-0 w-[520px] bg-[#0d0d0d] border-l border-[#1a1a1a] z-50 flex items-center justify-center">
+				<div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+				<div className="fixed right-0 top-0 bottom-0 w-[520px] bg-[#0a0a0a] border-l border-[#1f1f1f] z-50 flex items-center justify-center">
 					<div className="text-center">
-						<div className="text-4xl mb-2">🤷</div>
-						<div className="text-[--text-secondary]">Agent not found</div>
+						<div className="text-4xl mb-3 opacity-40">🤷</div>
+						<div className="text-[13px] text-[#555]">Agent not found</div>
 					</div>
 				</div>
 			</>
 		);
 	}
 
+	const tabs: { id: TabId; label: string; count?: number }[] = [
+		{ id: "soul", label: "Soul" },
+		{ id: "identity", label: "Identity" },
+		{ id: "memory", label: "Memory" },
+		{ id: "tasks", label: "Tasks", count: agent.tasks.total },
+	];
+
 	return (
 		<>
-			<div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
-			
-			<div className="fixed right-0 top-0 bottom-0 w-[520px] bg-[#0d0d0d] border-l border-[#1a1a1a] z-50 flex flex-col">
+			{/* Backdrop */}
+			<div className="fixed inset-0 bg-black/60 z-40" onClick={onClose} />
+
+			{/* Panel */}
+			<div className="fixed right-0 top-0 bottom-0 w-[520px] bg-[#0a0a0a] border-l border-[#1f1f1f] z-50 flex flex-col">
 				{/* Header */}
-				<div className="flex items-center justify-between px-5 py-4 border-b border-[#1a1a1a]">
+				<div className="flex items-center justify-between px-5 h-14 border-b border-[#1f1f1f]">
 					<div className="flex items-center gap-3">
-						<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-2xl">
+						<div className="w-9 h-9 rounded-md bg-[#141414] border border-[#262626] flex items-center justify-center text-xl">
 							{agent.emoji}
 						</div>
 						<div>
-							<h2 className="text-[16px] font-medium">{agent.name}</h2>
-							<p className="text-[12px] text-[--text-muted]">{agent.description}</p>
+							<h2 className="text-[15px] font-medium text-[#f5f5f5]">{agent.name}</h2>
+							<p className="text-[11px] text-[#555]">{agent.description}</p>
 						</div>
 					</div>
-					<button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg">
+					<button 
+						onClick={onClose} 
+						className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#1a1a1a] transition-colors"
+					>
 						<CloseIcon />
 					</button>
 				</div>
 
 				{/* Status bar */}
-				<div className="flex items-center gap-4 px-5 py-3 border-b border-[#1a1a1a] bg-[#0a0a0a]">
-					<StatusBadge status={agent.status} />
+				<div className="flex items-center gap-5 px-5 h-10 border-b border-[#1f1f1f] bg-[#0d0d0d]">
+					<StatusIndicator status={agent.status} />
 					{agent.model && (
-						<div className="flex items-center gap-1.5 text-[12px] text-[--text-muted]">
+						<div className="flex items-center gap-1.5 text-[11px] text-[#666]">
 							<ModelIcon />
 							<span>{agent.model}</span>
 						</div>
 					)}
-					<div className="flex items-center gap-1.5 text-[12px] text-[--text-muted]">
+					<div className="flex items-center gap-1.5 text-[11px] text-[#666]">
 						<SessionIcon />
 						<span>{agent.sessions.count} sessions</span>
 					</div>
 					{agent.sessions.lastActivity && (
-						<div className="flex items-center gap-1.5 text-[12px] text-[--text-muted]">
+						<div className="flex items-center gap-1.5 text-[11px] text-[#666]">
 							<ClockIcon />
 							<span>{formatRelativeTime(agent.sessions.lastActivity)}</span>
 						</div>
@@ -140,16 +150,24 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 				</div>
 
 				{/* Tabs */}
-				<div className="flex items-center gap-1 px-5 py-2 border-b border-[#1a1a1a]">
-					<TabButton active={activeTab === "soul"} onClick={() => setActiveTab("soul")}>
-						Soul
-					</TabButton>
-					<TabButton active={activeTab === "identity"} onClick={() => setActiveTab("identity")}>
-						Identity
-					</TabButton>
-					<TabButton active={activeTab === "tasks"} onClick={() => setActiveTab("tasks")}>
-						Tasks ({agent.tasks.total})
-					</TabButton>
+				<div className="flex items-center h-10 px-4 border-b border-[#1f1f1f] bg-[#0a0a0a]">
+					{tabs.map((tab) => (
+						<button
+							key={tab.id}
+							onClick={() => setActiveTab(tab.id)}
+							className={cn(
+								"px-3 h-10 text-[13px] border-b-2 transition-colors",
+								activeTab === tab.id
+									? "text-[#f5f5f5] border-[#5e6ad2]"
+									: "text-[#666] border-transparent hover:text-[#888]"
+							)}
+						>
+							{tab.label}
+							{tab.count !== undefined && (
+								<span className="ml-1.5 text-[#555]">{tab.count}</span>
+							)}
+						</button>
+					))}
 				</div>
 
 				{/* Content */}
@@ -174,29 +192,59 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 						</div>
 					)}
 
+					{activeTab === "memory" && (
+						<div className="p-5">
+							{agent.content.memory ? (
+								<MarkdownContent content={agent.content.memory} />
+							) : (
+								<EmptyState icon="🧠" message="No MEMORY.md found" />
+							)}
+						</div>
+					)}
+
 					{activeTab === "tasks" && (
-						<div className="p-5 space-y-4">
-							{/* Task stats */}
+						<div className="p-5 space-y-5">
+							{/* Stats grid */}
 							<div className="grid grid-cols-3 gap-3">
-								<StatCard label="In Progress" value={agent.tasks.inProgress} color="text-[--in-progress]" />
-								<StatCard label="Todo" value={agent.tasks.todo} color="text-[--todo]" />
-								<StatCard label="Done" value={agent.tasks.done} color="text-[--done]" />
+								<StatCard 
+									label="In Progress" 
+									value={agent.tasks.inProgress} 
+									color="#f5a524" 
+								/>
+								<StatCard 
+									label="Todo" 
+									value={agent.tasks.todo} 
+									color="#666" 
+								/>
+								<StatCard 
+									label="Done" 
+									value={agent.tasks.done} 
+									color="#4ade80" 
+								/>
 							</div>
 
 							{/* Recent tasks */}
 							{agent.recentTasks.length > 0 ? (
 								<div className="space-y-2">
-									<h3 className="text-[12px] text-[--text-muted] uppercase tracking-wider">Recent Tasks</h3>
-									{agent.recentTasks.map((task) => (
-										<div 
-											key={task.id} 
-											className="flex items-center gap-2 p-3 bg-[#141414] rounded-md border border-[#1e1e1e]"
-										>
-											<TaskStatusIcon status={task.status} />
-											<span className="text-[13px] flex-1 truncate">{task.title}</span>
-											<span className="text-[11px] text-[--text-muted]">{task.id}</span>
-										</div>
-									))}
+									<h3 className="text-[11px] text-[#555] uppercase tracking-wider font-medium">
+										Recent Tasks
+									</h3>
+									<div className="space-y-1">
+										{agent.recentTasks.map((task) => (
+											<div
+												key={task.id}
+												className="flex items-center gap-3 p-3 bg-[#121212] rounded-md border border-[#262626] hover:bg-[#1a1a1a] transition-colors"
+											>
+												<TaskStatusIcon status={task.status} />
+												<span className="flex-1 text-[13px] text-[#e8e8e8] truncate">
+													{task.title}
+												</span>
+												<span className="text-[11px] text-[#555] font-mono">
+													{task.id.toUpperCase()}
+												</span>
+											</div>
+										))}
+									</div>
 								</div>
 							) : (
 								<EmptyState icon="📋" message="No tasks assigned" />
@@ -206,9 +254,9 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 				</div>
 
 				{/* Footer */}
-				<div className="px-5 py-3 border-t border-[#1a1a1a]">
-					<span className="text-[11px] text-[--text-muted]">
-						Press <kbd className="px-1.5 py-0.5 bg-[#1a1a1a] rounded text-[10px]">Esc</kbd> to close
+				<div className="h-10 flex items-center px-5 border-t border-[#1f1f1f] bg-[#0d0d0d]">
+					<span className="text-[11px] text-[#555]">
+						Press <kbd className="mx-1 px-1.5 py-0.5 bg-[#1a1a1a] border border-[#262626] rounded text-[10px]">Esc</kbd> to close
 					</span>
 				</div>
 			</div>
@@ -216,33 +264,17 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 	);
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-	return (
-		<button
-			onClick={onClick}
-			className={cn(
-				"px-3 py-1.5 text-[13px] rounded transition-colors",
-				active 
-					? "bg-[#1a1a1a] text-[--text-primary]" 
-					: "text-[--text-muted] hover:text-[--text-secondary] hover:bg-white/5"
-			)}
-		>
-			{children}
-		</button>
-	);
-}
-
-function StatusBadge({ status }: { status: "active" | "idle" | "error" }) {
+function StatusIndicator({ status }: { status: "active" | "idle" | "error" }) {
 	const config = {
-		active: { label: "Active", color: "bg-green-500", textColor: "text-green-400" },
-		idle: { label: "Idle", color: "bg-yellow-500", textColor: "text-yellow-400" },
-		error: { label: "Error", color: "bg-red-500", textColor: "text-red-400" },
+		active: { label: "Active", dotColor: "bg-green-500", textColor: "text-green-400" },
+		idle: { label: "Idle", dotColor: "bg-yellow-500", textColor: "text-yellow-400" },
+		error: { label: "Error", dotColor: "bg-red-500", textColor: "text-red-400" },
 	};
-	const { label, color, textColor } = config[status];
+	const { label, dotColor, textColor } = config[status];
 
 	return (
-		<span className={cn("flex items-center gap-1.5 text-[12px]", textColor)}>
-			<span className={cn("w-2 h-2 rounded-full", color, status === "active" && "animate-pulse")} />
+		<span className={cn("flex items-center gap-1.5 text-[11px]", textColor)}>
+			<span className={cn("w-1.5 h-1.5 rounded-full", dotColor, status === "active" && "animate-pulse")} />
 			{label}
 		</span>
 	);
@@ -250,87 +282,136 @@ function StatusBadge({ status }: { status: "active" | "idle" | "error" }) {
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
 	return (
-		<div className="p-3 bg-[#141414] rounded-md border border-[#1e1e1e]">
-			<div className={cn("text-2xl font-semibold", color)}>{value}</div>
-			<div className="text-[11px] text-[--text-muted]">{label}</div>
+		<div className="p-3 bg-[#121212] rounded-md border border-[#262626]">
+			<div className="text-2xl font-semibold" style={{ color }}>{value}</div>
+			<div className="text-[11px] text-[#555] mt-0.5">{label}</div>
 		</div>
 	);
 }
 
 function TaskStatusIcon({ status }: { status: string }) {
 	const colors: Record<string, string> = {
-		"in-progress": "text-[--in-progress]",
-		todo: "text-[--todo]",
-		done: "text-[--done]",
-		backlog: "text-[--backlog]",
+		"in-progress": "#f5a524",
+		todo: "#666",
+		done: "#4ade80",
+		backlog: "#555",
 	};
+	const color = colors[status] || "#666";
 
 	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" className={colors[status] || "text-[--text-muted]"}>
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none">
 			{status === "done" ? (
 				<>
-					<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-					<path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+					<circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.5" />
+					<path d="M5 8l2 2 4-4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
 				</>
 			) : status === "in-progress" ? (
 				<>
-					<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-					<path d="M8 2a6 6 0 016 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+					<circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.5" />
+					<path d="M8 2 A6 6 0 0 1 14 8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
 				</>
 			) : (
-				<circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
+				<circle cx="8" cy="8" r="6" stroke={color} strokeWidth="1.5" />
 			)}
 		</svg>
 	);
 }
 
 function MarkdownContent({ content }: { content: string }) {
-	// Simple markdown-like rendering
 	const lines = content.split("\n");
-	
+
 	return (
-		<div className="prose prose-invert prose-sm max-w-none">
+		<div className="space-y-1">
 			{lines.map((line, i) => {
-				// Headers
+				// H1
 				if (line.startsWith("# ")) {
-					return <h1 key={i} className="text-xl font-semibold mt-4 mb-2 text-[--text-primary]">{line.slice(2)}</h1>;
+					return (
+						<h1 key={i} className="text-[18px] font-semibold text-[#f5f5f5] mt-4 mb-2 first:mt-0">
+							{line.slice(2)}
+						</h1>
+					);
 				}
+				// H2
 				if (line.startsWith("## ")) {
-					return <h2 key={i} className="text-lg font-medium mt-4 mb-2 text-[--text-primary]">{line.slice(3)}</h2>;
+					return (
+						<h2 key={i} className="text-[15px] font-medium text-[#e8e8e8] mt-4 mb-2">
+							{line.slice(3)}
+						</h2>
+					);
 				}
+				// H3
 				if (line.startsWith("### ")) {
-					return <h3 key={i} className="text-base font-medium mt-3 mb-1 text-[--text-primary]">{line.slice(4)}</h3>;
+					return (
+						<h3 key={i} className="text-[14px] font-medium text-[#e8e8e8] mt-3 mb-1.5">
+							{line.slice(4)}
+						</h3>
+					);
 				}
-				
-				// Bold text with **
+				// Bold text
 				if (line.includes("**")) {
 					const parts = line.split(/\*\*(.*?)\*\*/g);
 					return (
-						<p key={i} className="text-[13px] text-[--text-secondary] leading-relaxed my-1">
-							{parts.map((part, j) => 
-								j % 2 === 1 ? <strong key={j} className="font-semibold text-[--text-primary]">{part}</strong> : part
+						<p key={i} className="text-[13px] text-[#888] leading-relaxed">
+							{parts.map((part, j) =>
+								j % 2 === 1 ? (
+									<strong key={j} className="font-medium text-[#e8e8e8]">{part}</strong>
+								) : (
+									part
+								)
 							)}
 						</p>
 					);
 				}
-
 				// List items
 				if (line.startsWith("- ") || line.startsWith("* ")) {
 					return (
-						<div key={i} className="flex items-start gap-2 text-[13px] text-[--text-secondary] my-0.5 ml-2">
-							<span className="text-[--accent] mt-1">•</span>
-							<span>{line.slice(2)}</span>
+						<div key={i} className="flex items-start gap-2 text-[13px] text-[#888] pl-2">
+							<span className="text-[#5e6ad2] mt-0.5">•</span>
+							<span className="leading-relaxed">{line.slice(2)}</span>
 						</div>
 					);
 				}
-
+				// Numbered list
+				const numberedMatch = line.match(/^(\d+)\.\s(.+)$/);
+				if (numberedMatch) {
+					return (
+						<div key={i} className="flex items-start gap-2 text-[13px] text-[#888] pl-2">
+							<span className="text-[#555] w-4">{numberedMatch[1]}.</span>
+							<span className="leading-relaxed">{numberedMatch[2]}</span>
+						</div>
+					);
+				}
+				// Code blocks (inline)
+				if (line.includes("`") && !line.startsWith("```")) {
+					const parts = line.split(/`([^`]+)`/g);
+					return (
+						<p key={i} className="text-[13px] text-[#888] leading-relaxed">
+							{parts.map((part, j) =>
+								j % 2 === 1 ? (
+									<code key={j} className="px-1 py-0.5 bg-[#1a1a1a] border border-[#262626] rounded text-[12px] text-[#e8e8e8] font-mono">
+										{part}
+									</code>
+								) : (
+									part
+								)
+							)}
+						</p>
+					);
+				}
 				// Empty lines
 				if (!line.trim()) {
 					return <div key={i} className="h-2" />;
 				}
-
+				// Horizontal rule
+				if (line.match(/^-{3,}$/)) {
+					return <hr key={i} className="my-4 border-[#262626]" />;
+				}
 				// Regular text
-				return <p key={i} className="text-[13px] text-[--text-secondary] leading-relaxed my-1">{line}</p>;
+				return (
+					<p key={i} className="text-[13px] text-[#888] leading-relaxed">
+						{line}
+					</p>
+				);
 			})}
 		</div>
 	);
@@ -338,9 +419,9 @@ function MarkdownContent({ content }: { content: string }) {
 
 function EmptyState({ icon, message }: { icon: string; message: string }) {
 	return (
-		<div className="flex flex-col items-center justify-center py-12 text-center">
-			<div className="text-4xl mb-3 opacity-50">{icon}</div>
-			<div className="text-[13px] text-[--text-muted]">{message}</div>
+		<div className="flex flex-col items-center justify-center py-16 text-center">
+			<div className="text-4xl mb-3 opacity-30">{icon}</div>
+			<div className="text-[13px] text-[#555]">{message}</div>
 		</div>
 	);
 }
@@ -358,16 +439,47 @@ function formatRelativeTime(isoString: string): string {
 	return `${Math.floor(diffHours / 24)}d ago`;
 }
 
-// Icons
+function LoadingSpinner() {
+	return (
+		<svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+			<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+			<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+		</svg>
+	);
+}
+
+// Icons (matching Linear exactly)
 function CloseIcon() {
-	return <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="2"><path d="M4 4l8 8M12 4l-8 8" /></svg>;
+	return (
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#666" strokeWidth="1.5">
+			<path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+		</svg>
+	);
 }
+
 function ModelIcon() {
-	return <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><rect x="2" y="2" width="12" height="12" rx="2" /><path d="M5 5h6M5 8h6M5 11h4" /></svg>;
+	return (
+		<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+			<rect x="2" y="2" width="12" height="12" rx="2" />
+			<path d="M5 5h6M5 8h6M5 11h4" />
+		</svg>
+	);
 }
+
 function SessionIcon() {
-	return <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><rect x="2" y="4" width="12" height="10" rx="1" /><path d="M5 4V2M11 4V2" /></svg>;
+	return (
+		<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+			<rect x="2" y="4" width="12" height="10" rx="1" />
+			<path d="M5 4V2M11 4V2" />
+		</svg>
+	);
 }
+
 function ClockIcon() {
-	return <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><circle cx="8" cy="8" r="6" /><path d="M8 4v4l3 2" /></svg>;
+	return (
+		<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3">
+			<circle cx="8" cy="8" r="6" />
+			<path d="M8 4v4l3 2" strokeLinecap="round" />
+		</svg>
+	);
 }

@@ -10,7 +10,7 @@ const TASKS_FILE = path.join(OPENCLAW_BASE, "shared", "tasks.json");
 export async function POST(request: Request) {
 	try {
 		const body = await request.json();
-		const { taskId, title, description, assignee, projectId, status, priority } = body;
+		const { taskId, title, description, assignee, projectId, status, priority, notes, blockedReason } = body;
 
 		// Validate required fields
 		if (!taskId) {
@@ -38,14 +38,24 @@ export async function POST(request: Request) {
 		if (assignee !== undefined) task.assignee = assignee;
 		if (projectId !== undefined) task.projectId = projectId;
 		if (priority !== undefined) task.priority = priority;
+		if (notes !== undefined) task.notes = notes;
+		if (blockedReason !== undefined) task.blockedReason = blockedReason;
 		
 		if (status !== undefined) {
+			const prevStatus = task.status;
 			task.status = status;
 			// Auto-set timestamps
 			if (status === "in-progress" && !task.claimedAt) {
 				task.claimedAt = new Date().toISOString();
 			} else if (status === "done" && !task.completedAt) {
 				task.completedAt = new Date().toISOString();
+			} else if (status === "blocked") {
+				task.blockedAt = new Date().toISOString();
+			}
+			// Clear blocked fields when unblocking
+			if (prevStatus === "blocked" && status !== "blocked") {
+				delete task.blockedReason;
+				delete task.blockedAt;
 			}
 		}
 

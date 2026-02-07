@@ -64,6 +64,8 @@ export default defineSchema({
 		createdAt: v.number(),
 		claimedAt: v.optional(v.number()),
 		completedAt: v.optional(v.number()),
+		blockedReason: v.optional(v.string()),
+		blockedAt: v.optional(v.number()),
 		notes: v.optional(v.array(v.string())),
 	})
 		.index("by_taskId", ["taskId"])

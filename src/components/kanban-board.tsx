@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { Task, Project } from "@/lib/types";
 
 interface KanbanBoardProps {
@@ -115,13 +116,39 @@ function Column({ status, label, color, tasks, projectMap, onSelectTask }: {
 
 function TaskCard({ task, project, onClick }: { task: Task; project?: Project; onClick: () => void }) {
 	const isBlocked = task.status === "blocked";
+	const [resolution, setResolution] = useState("");
+	const [resolving, setResolving] = useState(false);
+
+	const handleResolve = async (e: React.MouseEvent) => {
+		e.stopPropagation(); // Don't trigger onClick
+		if (!resolution.trim()) return;
+		
+		setResolving(true);
+		try {
+			await fetch("/api/tasks/update", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					taskId: task.id,
+					status: "in-progress",
+					notes: [...(task.notes || []), `Unblocked: ${resolution.trim()}`],
+				}),
+			});
+			toast.success("Task unblocked!", { description: task.title });
+			setResolution("");
+		} catch (error) {
+			toast.error("Failed to unblock task");
+		} finally {
+			setResolving(false);
+		}
+	};
 	
 	return (
 		<div 
 			onClick={onClick}
 			className={`group rounded-md p-3 cursor-pointer transition-colors min-h-[80px] ${
 				isBlocked 
-					? "bg-red-500/10 border border-red-500/30 hover:bg-red-500/15 hover:border-red-500/50 opacity-90" 
+					? "bg-red-500/10 border border-red-500/30 hover:bg-red-500/15 hover:border-red-500/50" 
 					: "bg-[#121212] border border-[#262626] hover:bg-[#1a1a1a] hover:border-[#333]"
 			}`}
 		>
@@ -143,15 +170,50 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 				</span>
 			</div>
 
-			{/* Row 3: Project badge + Date badge (no dots button) */}
-			<div className="flex items-center gap-1.5 flex-wrap">
-				{project && (
-					<ProjectBadge project={project} />
-				)}
-				{task.completedAt && (
-					<DateBadge date={task.completedAt} />
-				)}
-			</div>
+			{/* Blocked reason + resolve input */}
+			{isBlocked && (
+				<div className="mt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
+					{task.blockedReason && (
+						<div className="flex items-start gap-1.5 text-[11px] text-red-400">
+							<span className="mt-0.5">⚠️</span>
+							<span>{task.blockedReason}</span>
+						</div>
+					)}
+					<div className="flex gap-1.5">
+						<input
+							type="text"
+							value={resolution}
+							onChange={(e) => setResolution(e.target.value)}
+							placeholder="How did you resolve this?"
+							className="flex-1 px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-[11px] text-[#e8e8e8] placeholder:text-[#555] focus:outline-none focus:border-green-500/50"
+							onKeyDown={(e) => {
+								if (e.key === "Enter" && resolution.trim()) {
+									handleResolve(e as unknown as React.MouseEvent);
+								}
+							}}
+						/>
+						<button
+							onClick={handleResolve}
+							disabled={!resolution.trim() || resolving}
+							className="px-2 py-1 bg-green-500/20 border border-green-500/30 rounded text-[10px] text-green-400 hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+						>
+							{resolving ? "..." : "✓ Resolve"}
+						</button>
+					</div>
+				</div>
+			)}
+
+			{/* Row 3: Project badge + Date badge */}
+			{!isBlocked && (
+				<div className="flex items-center gap-1.5 flex-wrap">
+					{project && (
+						<ProjectBadge project={project} />
+					)}
+					{task.completedAt && (
+						<DateBadge date={task.completedAt} />
+					)}
+				</div>
+			)}
 
 			{/* Row 4: Created footer */}
 			<div className="text-[10px] text-[#444] mt-2">

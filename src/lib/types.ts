@@ -38,6 +38,8 @@ export interface Task {
 	createdAt?: string;
 	claimedAt?: string;
 	completedAt?: string;
+	blockedReason?: string;
+	blockedAt?: string;
 	notes?: string[];
 }
 

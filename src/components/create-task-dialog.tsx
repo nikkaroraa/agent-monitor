@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Agent, Project } from "@/lib/types";
 
@@ -84,10 +85,19 @@ export function CreateTaskDialog({ open, onClose, agents, projects, onSuccess }:
 				throw new Error(data.error || "Failed to create task");
 			}
 
+			const data = await res.json();
+			toast.success(`Task created: ${data.task.title}`, {
+				description: `Assigned to ${assignee}`,
+			});
+
 			onSuccess();
 			handleClose();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to create task");
+			const message = err instanceof Error ? err.message : "Failed to create task";
+			setError(message);
+			toast.error("Failed to create task", {
+				description: message,
+			});
 		} finally {
 			setSubmitting(false);
 		}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "convex/react";
+import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
 import type { Agent, Task, Project } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,58 @@ export function TaskDetailPanel({ task, project, projects, agents, onClose }: Ta
 	const priority = priorityConfig[task.priority];
 
 	const [showProjectPicker, setShowProjectPicker] = useState(false);
+	const [editingTitle, setEditingTitle] = useState(false);
+	const [editingDescription, setEditingDescription] = useState(false);
+	const [title, setTitle] = useState(task.title);
+	const [description, setDescription] = useState(task.description || "");
+	
 	const assignToProject = useMutation(api.projects.assignTask);
+
+	const saveTitle = async () => {
+		if (title.trim() === task.title) {
+			setEditingTitle(false);
+			return;
+		}
+		
+		try {
+			await fetch("/api/tasks/update", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					taskId: task.id,
+					title: title.trim(),
+				}),
+			});
+			toast.success("Title updated");
+			setEditingTitle(false);
+		} catch (error) {
+			toast.error("Failed to update title");
+			setTitle(task.title); // Revert on error
+		}
+	};
+
+	const saveDescription = async () => {
+		if (description.trim() === (task.description || "")) {
+			setEditingDescription(false);
+			return;
+		}
+		
+		try {
+			await fetch("/api/tasks/update", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					taskId: task.id,
+					description: description.trim() || undefined,
+				}),
+			});
+			toast.success("Description updated");
+			setEditingDescription(false);
+		} catch (error) {
+			toast.error("Failed to update description");
+			setDescription(task.description || ""); // Revert on error
+		}
+	};
 
 	const handleProjectChange = async (projectId: string | null) => {
 		try {
@@ -76,12 +128,56 @@ export function TaskDetailPanel({ task, project, projects, agents, onClose }: Ta
 				{/* Content */}
 				<div className="flex-1 overflow-y-auto">
 					<div className="p-4 space-y-5">
-						<h2 className="text-[16px] font-medium">{task.title}</h2>
+						{/* Editable title */}
+						{editingTitle ? (
+							<input
+								type="text"
+								value={title}
+								onChange={(e) => setTitle(e.target.value)}
+								onBlur={saveTitle}
+								onKeyDown={(e) => {
+									if (e.key === "Enter") saveTitle();
+									if (e.key === "Escape") { setTitle(task.title); setEditingTitle(false); }
+								}}
+								className="w-full px-2 py-1 -mx-2 -my-1 bg-[#1a1a1a] border border-[#5e6ad2] rounded text-[16px] font-medium focus:outline-none"
+								autoFocus
+							/>
+						) : (
+							<h2 
+								className="text-[16px] font-medium cursor-text hover:bg-white/5 px-2 py-1 -mx-2 -my-1 rounded transition-colors"
+								onClick={() => setEditingTitle(true)}
+							>
+								{task.title}
+							</h2>
+						)}
 
-						{task.description && (
-							<p className="text-[13px] text-[--text-secondary] leading-relaxed">
-								{task.description}
+						{/* Editable description */}
+						{editingDescription ? (
+							<textarea
+								value={description}
+								onChange={(e) => setDescription(e.target.value)}
+								onBlur={saveDescription}
+								onKeyDown={(e) => {
+									if (e.key === "Escape") { setDescription(task.description || ""); setEditingDescription(false); }
+								}}
+								className="w-full px-2 py-1 -mx-2 -my-1 bg-[#1a1a1a] border border-[#5e6ad2] rounded text-[13px] text-[--text-secondary] focus:outline-none resize-none"
+								rows={3}
+								autoFocus
+							/>
+						) : task.description || editingDescription ? (
+							<p 
+								className="text-[13px] text-[--text-secondary] leading-relaxed cursor-text hover:bg-white/5 px-2 py-1 -mx-2 -my-1 rounded transition-colors"
+								onClick={() => setEditingDescription(true)}
+							>
+								{task.description || "Click to add description"}
 							</p>
+						) : (
+							<button
+								onClick={() => setEditingDescription(true)}
+								className="text-[13px] text-[--text-muted] hover:text-[--text-secondary] transition-colors"
+							>
+								+ Add description
+							</button>
 						)}
 
 						{/* Properties */}

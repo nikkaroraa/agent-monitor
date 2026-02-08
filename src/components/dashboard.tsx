@@ -7,8 +7,10 @@ import type { DashboardData } from "@/lib/types";
 import { LinearSidebar } from "./linear-sidebar";
 import { LinearHeader } from "./linear-header";
 import { KanbanBoard } from "./kanban-board";
+import { SessionsTimeline } from "./sessions-timeline";
 import { TaskDetailPanel } from "./task-detail-panel";
 import { AgentDetailPanel } from "./agent-detail-panel";
+import { SessionDetailPanel } from "./session-detail-panel";
 import { CreateProjectDialog } from "./create-project-dialog";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { CommandPalette } from "./command-palette";
@@ -16,6 +18,7 @@ import { CommandPalette } from "./command-palette";
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
 
 type ViewFilter = "all" | "active" | "backlog";
+type MainView = "kanban" | "sessions";
 
 export function Dashboard() {
 	const [fallbackData, setFallbackData] = useState<DashboardData | null>(null);
@@ -23,8 +26,10 @@ export function Dashboard() {
 	const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 	const [selectedProject, setSelectedProject] = useState<string | null>(null);
 	const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+	const [selectedSessionKey, setSelectedSessionKey] = useState<string | null>(null);
 	const [viewingAgentId, setViewingAgentId] = useState<string | null>(null);
 	const [currentFilter, setCurrentFilter] = useState<ViewFilter>("all");
+	const [currentView, setCurrentView] = useState<MainView>("kanban");
 	const [createProjectOpen, setCreateProjectOpen] = useState(false);
 	const [createTaskOpen, setCreateTaskOpen] = useState(false);
 	const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -176,10 +181,14 @@ export function Dashboard() {
 				projects={data.projects}
 				selectedAgent={selectedAgent}
 				selectedProject={selectedProject}
+				currentView={currentView}
 				onSelectAgent={handleAgentSelect}
-				onSelectProject={(id) => { setSelectedProject(id); setSelectedAgent(null); }}
+				onSelectProject={(id) => { setSelectedProject(id); setSelectedAgent(null); setCurrentView("kanban"); }}
 				onCreateProject={() => setCreateProjectOpen(true)}
 				onViewAgent={handleViewAgent}
+				onViewChange={(view) => { setCurrentView(view); setSelectedTaskId(null); setSelectedSessionKey(null); }}
+				sessionCount={data.sessions?.length ?? 0}
+				activeSessionCount={data.sessions?.filter(s => s.status === "active").length ?? 0}
 			/>
 
 			{/* Main */}
@@ -187,14 +196,24 @@ export function Dashboard() {
 				<LinearHeader 
 					currentFilter={currentFilter}
 					onFilterChange={setCurrentFilter}
+					currentView={currentView}
 				/>
-				<KanbanBoard
-					tasks={filteredTasks}
-					projects={data.projects}
-					selectedAgent={selectedAgent}
-					selectedProject={selectedProject}
-					onSelectTask={setSelectedTaskId}
-				/>
+				{currentView === "kanban" ? (
+					<KanbanBoard
+						tasks={filteredTasks}
+						projects={data.projects}
+						selectedAgent={selectedAgent}
+						selectedProject={selectedProject}
+						onSelectTask={setSelectedTaskId}
+					/>
+				) : (
+					<SessionsTimeline
+						sessions={data.sessions ?? []}
+						agents={data.agents}
+						selectedAgent={selectedAgent}
+						onSelectSession={setSelectedSessionKey}
+					/>
+				)}
 			</div>
 
 			{/* Task detail panel */}
@@ -213,6 +232,15 @@ export function Dashboard() {
 				<AgentDetailPanel
 					agentId={viewingAgentId}
 					onClose={() => setViewingAgentId(null)}
+				/>
+			)}
+
+			{/* Session detail panel */}
+			{selectedSessionKey && data.sessions && (
+				<SessionDetailPanel
+					session={data.sessions.find(s => s.key === selectedSessionKey)!}
+					agent={data.agents.find(a => a.id === data.sessions?.find(s => s.key === selectedSessionKey)?.agentId)}
+					onClose={() => setSelectedSessionKey(null)}
 				/>
 			)}
 

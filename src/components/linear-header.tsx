@@ -3,36 +3,47 @@
 import { cn } from "@/lib/utils";
 
 type ViewFilter = "all" | "active" | "backlog";
+type MainView = "kanban" | "sessions";
 
 interface LinearHeaderProps {
 	currentFilter: ViewFilter;
 	onFilterChange: (filter: ViewFilter) => void;
+	currentView?: MainView;
 }
 
-export function LinearHeader({ currentFilter, onFilterChange }: LinearHeaderProps) {
+export function LinearHeader({ currentFilter, onFilterChange, currentView = "kanban" }: LinearHeaderProps) {
 	return (
 		<header className="bg-[--bg] border-b border-[#1a1a1a]">
 			{/* Filter tabs row */}
 			<div className="flex items-center justify-between px-4 py-2">
 				<div className="flex items-center gap-1">
-					<TabButton 
-						active={currentFilter === "all"}
-						onClick={() => onFilterChange("all")}
-						icon={<AllIcon />}
-						label="All issues"
-					/>
-					<TabButton 
-						active={currentFilter === "active"}
-						onClick={() => onFilterChange("active")}
-						icon={<ActiveIcon />}
-						label="Active"
-					/>
-					<TabButton 
-						active={currentFilter === "backlog"}
-						onClick={() => onFilterChange("backlog")}
-						icon={<BacklogIcon />}
-						label="Backlog"
-					/>
+					{currentView === "kanban" ? (
+						<>
+							<TabButton 
+								active={currentFilter === "all"}
+								onClick={() => onFilterChange("all")}
+								icon={<AllIcon />}
+								label="All issues"
+							/>
+							<TabButton 
+								active={currentFilter === "active"}
+								onClick={() => onFilterChange("active")}
+								icon={<ActiveIcon />}
+								label="Active"
+							/>
+							<TabButton 
+								active={currentFilter === "backlog"}
+								onClick={() => onFilterChange("backlog")}
+								icon={<BacklogIcon />}
+								label="Backlog"
+							/>
+						</>
+					) : (
+						<div className="flex items-center gap-2 px-2">
+							<ActivityIcon />
+							<span className="text-[14px] font-medium text-[--text-primary]">Session Activity</span>
+						</div>
+					)}
 					<button className="p-2 hover:bg-white/5 rounded ml-1">
 						<SettingsIcon />
 					</button>
@@ -158,6 +169,14 @@ function FilterIcon() {
 	return (
 		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
 			<path d="M2 4h12M4 8h8M6 12h4" />
+		</svg>
+	);
+}
+
+function ActivityIcon() {
+	return (
+		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+			<path d="M14 8H12L10 12L6 4L4 8H2" />
 		</svg>
 	);
 }

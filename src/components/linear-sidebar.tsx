@@ -9,10 +9,14 @@ interface LinearSidebarProps {
 	projects: Project[];
 	selectedAgent: string | null;
 	selectedProject: string | null;
+	currentView: "kanban" | "sessions";
 	onSelectAgent: (id: string | null) => void;
 	onSelectProject: (id: string | null) => void;
 	onCreateProject: () => void;
 	onViewAgent: (id: string) => void;
+	onViewChange: (view: "kanban" | "sessions") => void;
+	sessionCount?: number;
+	activeSessionCount?: number;
 }
 
 export function LinearSidebar({ 
@@ -20,13 +24,18 @@ export function LinearSidebar({
 	projects,
 	selectedAgent, 
 	selectedProject,
+	currentView,
 	onSelectAgent,
 	onSelectProject,
 	onCreateProject,
 	onViewAgent,
+	onViewChange,
+	sessionCount = 0,
+	activeSessionCount = 0,
 }: LinearSidebarProps) {
 	const [workspaceOpen, setWorkspaceOpen] = useState(true);
 	const [agentsOpen, setAgentsOpen] = useState(true);
+	const [sessionsOpen, setSessionsOpen] = useState(true);
 
 	return (
 		<aside className="w-[220px] h-screen bg-[#0d0d0d] border-r border-[#1a1a1a] flex flex-col">
@@ -112,6 +121,28 @@ export function LinearSidebar({
 							onViewDetails={() => onViewAgent(agent.id)}
 						/>
 					))}
+				</Section>
+
+				{/* Sessions */}
+				<Section label="Sessions" open={sessionsOpen} onToggle={() => setSessionsOpen(!sessionsOpen)}>
+					<NavItem 
+						icon={<ActivityIcon />}
+						label="Activity"
+						selected={currentView === "sessions"}
+						onClick={() => onViewChange("sessions")}
+						badge={activeSessionCount > 0 ? (
+							<span className="flex items-center gap-1 text-[10px] text-green-400">
+								<span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+								{activeSessionCount}
+							</span>
+						) : undefined}
+					/>
+					<NavItem 
+						icon={<HistoryIcon />}
+						label="All sessions"
+						muted
+						badge={<span className="text-[10px] text-[--text-muted]">{sessionCount}</span>}
+					/>
 				</Section>
 
 				{/* Try */}
@@ -297,4 +328,10 @@ function GithubIcon() {
 }
 function InfoIcon() {
 	return <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5"><circle cx="8" cy="8" r="6" /><path d="M8 11V7M8 5V5" strokeLinecap="round" /></svg>;
+}
+function ActivityIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M14 8H12L10 12L6 4L4 8H2" /></svg>;
+}
+function HistoryIcon() {
+	return <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><circle cx="8" cy="8" r="6" /><path d="M8 4v4l2.5 2.5" /></svg>;
 }

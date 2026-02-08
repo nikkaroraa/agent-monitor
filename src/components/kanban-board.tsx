@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { Task, Project } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface KanbanBoardProps {
 	tasks: Task[];
@@ -14,10 +15,10 @@ interface KanbanBoardProps {
 
 type Status = "backlog" | "todo" | "in-progress" | "blocked" | "done" | "canceled";
 
-const COLUMNS: { id: Status; label: string; color?: string }[] = [
+const COLUMNS: { id: Status; label: string }[] = [
 	{ id: "todo", label: "Todo" },
 	{ id: "in-progress", label: "In Progress" },
-	{ id: "blocked", label: "Blocked", color: "#ef4444" },
+	{ id: "blocked", label: "Blocked" },
 	{ id: "done", label: "Done" },
 ];
 
@@ -39,7 +40,6 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 		return g;
 	}, [filteredTasks]);
 
-	// Create project lookup map
 	const projectMap = useMemo(() => {
 		const map: Record<string, Project> = {};
 		for (const p of projects) map[p.id] = p;
@@ -47,14 +47,13 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 	}, [projects]);
 
 	return (
-		<div className="flex-1 overflow-x-auto bg-[#0a0a0a] p-4">
+		<div className="flex-1 overflow-x-auto bg-[--bg] px-6 py-5">
 			<div className="flex h-full gap-4">
 				{COLUMNS.map((col) => (
 					<Column 
 						key={col.id} 
 						status={col.id} 
 						label={col.label}
-						color={col.color}
 						tasks={grouped[col.id]} 
 						projectMap={projectMap}
 						onSelectTask={onSelectTask}
@@ -65,10 +64,9 @@ export function KanbanBoard({ tasks, projects, selectedAgent, selectedProject, o
 	);
 }
 
-function Column({ status, label, color, tasks, projectMap, onSelectTask }: { 
+function Column({ status, label, tasks, projectMap, onSelectTask }: { 
 	status: Status; 
 	label: string;
-	color?: string;
 	tasks: Task[]; 
 	projectMap: Record<string, Project>;
 	onSelectTask: (id: string) => void;
@@ -76,31 +74,33 @@ function Column({ status, label, color, tasks, projectMap, onSelectTask }: {
 	const isBlocked = status === "blocked";
 	
 	return (
-		<div className={`w-[320px] flex-shrink-0 flex flex-col ${isBlocked ? "bg-red-500/5 rounded-lg" : ""}`}>
+		<div 
+			className={cn(
+				"w-[280px] flex-shrink-0 flex flex-col",
+				isBlocked && "bg-[--blocked]/[0.03] rounded-lg"
+			)}
+		>
 			{/* Column header - Linear style */}
-			<div className="flex items-center justify-between px-2 py-2 mb-2">
+			<div className="group flex items-center justify-between px-1 py-2 mb-1">
 				<div className="flex items-center gap-2">
 					<StatusIcon status={status} size={14} />
-					<span 
-						className="text-[13px] font-medium"
-						style={{ color: color || "#e8e8e8" }}
-					>
+					<span className="text-[13px] font-medium text-[--text-primary]">
 						{label}
 					</span>
-					<span className="text-[13px] text-[#555] ml-0.5">{tasks.length}</span>
+					<span className="text-[13px] text-[--text-muted]">{tasks.length}</span>
 				</div>
-				<div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-					<button className="p-1 hover:bg-white/5 rounded">
+				<div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+					<button className="p-1.5 hover:bg-white/[0.06] rounded transition-colors">
 						<DotsIcon />
 					</button>
-					<button className="p-1 hover:bg-white/5 rounded">
+					<button className="p-1.5 hover:bg-white/[0.06] rounded transition-colors">
 						<PlusIcon />
 					</button>
 				</div>
 			</div>
 
 			{/* Cards - 8px gap */}
-			<div className="flex-1 overflow-y-auto space-y-2">
+			<div className="flex-1 overflow-y-auto space-y-2 pr-1">
 				{tasks.map((task) => (
 					<TaskCard 
 						key={task.id} 
@@ -120,7 +120,7 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 	const [resolving, setResolving] = useState(false);
 
 	const handleResolve = async (e: React.MouseEvent) => {
-		e.stopPropagation(); // Don't trigger onClick
+		e.stopPropagation();
 		if (!resolution.trim()) return;
 		
 		setResolving(true);
@@ -146,36 +146,37 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 	return (
 		<div 
 			onClick={onClick}
-			className={`group rounded-md p-3 cursor-pointer transition-colors min-h-[80px] ${
+			className={cn(
+				"group rounded-lg p-3 cursor-pointer transition-all duration-150 min-h-[80px]",
 				isBlocked 
-					? "bg-red-500/10 border border-red-500/30 hover:bg-red-500/15 hover:border-red-500/50" 
-					: "bg-[#121212] border border-[#262626] hover:bg-[#1a1a1a] hover:border-[#333]"
-			}`}
+					? "bg-[--blocked]/[0.08] border border-[--blocked]/20 hover:bg-[--blocked]/[0.12] hover:border-[--blocked]/30" 
+					: "bg-[--card-bg] border border-[--card-border] hover:bg-[--card-hover-bg] hover:border-[--card-hover-border]"
+			)}
 		>
 			{/* Row 1: Task ID + Avatar */}
-			<div className="flex items-center justify-between mb-1.5">
-				<span className="text-[11px] text-[#666] font-mono">
-					{task.id.toUpperCase()}
+			<div className="flex items-center justify-between mb-2">
+				<span className="text-[11px] text-[--text-muted] font-mono tracking-tight">
+					{task.id.toUpperCase().replace("TASK-", "TSK-")}
 				</span>
-				<AssigneeIcon assignee={task.assignee} />
+				<AssigneeAvatar assignee={task.assignee} />
 			</div>
 
 			{/* Row 2: Status + Title */}
-			<div className="flex items-start gap-2 mb-2">
-				<span className="mt-0.5 flex-shrink-0">
+			<div className="flex items-start gap-2 mb-2.5">
+				<span className="mt-[3px] flex-shrink-0">
 					<StatusIcon status={task.status} size={14} />
 				</span>
-				<span className="text-[13px] text-[#e8e8e8] leading-tight font-normal">
+				<span className="text-[13px] text-[--text-primary] leading-[1.4] font-normal line-clamp-2">
 					{task.title}
 				</span>
 			</div>
 
-			{/* Blocked reason + resolve input */}
+			{/* Blocked reason + resolve */}
 			{isBlocked && (
-				<div className="mt-2 space-y-2" onClick={(e) => e.stopPropagation()}>
+				<div className="mt-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
 					{task.blockedReason && (
-						<div className="flex items-start gap-1.5 text-[11px] text-red-400">
-							<span className="mt-0.5">⚠️</span>
+						<div className="flex items-start gap-1.5 text-[11px] text-[--blocked]/90 leading-tight">
+							<span className="mt-px">⚠</span>
 							<span>{task.blockedReason}</span>
 						</div>
 					)}
@@ -184,8 +185,8 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 							type="text"
 							value={resolution}
 							onChange={(e) => setResolution(e.target.value)}
-							placeholder="How did you resolve this?"
-							className="flex-1 px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-[11px] text-[#e8e8e8] placeholder:text-[#555] focus:outline-none focus:border-green-500/50"
+							placeholder="How was this resolved?"
+							className="flex-1 px-2 py-1.5 bg-[--bg] border border-[--card-border] rounded text-[11px] text-[--text-primary] placeholder:text-[--text-muted] focus:outline-none focus:border-[--done]/40 transition-colors"
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && resolution.trim()) {
 									handleResolve(e as unknown as React.MouseEvent);
@@ -195,30 +196,23 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 						<button
 							onClick={handleResolve}
 							disabled={!resolution.trim() || resolving}
-							className="px-2 py-1 bg-green-500/20 border border-green-500/30 rounded text-[10px] text-green-400 hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							className="px-2.5 py-1.5 bg-[--done]/15 border border-[--done]/25 rounded text-[10px] font-medium text-[--done] hover:bg-[--done]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
 						>
-							{resolving ? "..." : "✓ Resolve"}
+							{resolving ? "..." : "Resolve"}
 						</button>
 					</div>
 				</div>
 			)}
 
-			{/* Row 3: Project badge + Date badge */}
-			{!isBlocked && (
-				<div className="flex items-center gap-1.5 flex-wrap">
-					{project && (
-						<ProjectBadge project={project} />
-					)}
-					{task.completedAt && (
-						<DateBadge date={task.completedAt} />
+			{/* Row 3: Project + Priority badges */}
+			{!isBlocked && (project || task.priority !== "none") && (
+				<div className="flex items-center gap-1.5 flex-wrap mt-1">
+					{project && <ProjectBadge project={project} />}
+					{task.priority && task.priority !== "none" && task.priority !== "medium" && (
+						<PriorityBadge priority={task.priority} />
 					)}
 				</div>
 			)}
-
-			{/* Row 4: Created footer */}
-			<div className="text-[10px] text-[#444] mt-2">
-				Created {formatCreatedDate(task.createdAt)}
-			</div>
 		</div>
 	);
 }
@@ -226,17 +220,37 @@ function TaskCard({ task, project, onClick }: { task: Task; project?: Project; o
 function ProjectBadge({ project }: { project: Project }) {
 	return (
 		<span 
-			className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
+			className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
 			style={{ 
-				backgroundColor: `${project.color}15`,
+				backgroundColor: `${project.color}12`,
 				color: project.color 
 			}}
 		>
 			<span 
-				className="w-1.5 h-1.5 rounded-sm" 
+				className="w-[6px] h-[6px] rounded-[2px]" 
 				style={{ backgroundColor: project.color }}
 			/>
 			{project.name}
+		</span>
+	);
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+	const config: Record<string, { bg: string; text: string; icon: string }> = {
+		urgent: { bg: "rgba(229, 72, 77, 0.12)", text: "#e5484d", icon: "⚡" },
+		high: { bg: "rgba(245, 166, 35, 0.12)", text: "#f5a623", icon: "↑" },
+		low: { bg: "rgba(107, 107, 107, 0.12)", text: "#6b6b6b", icon: "↓" },
+	};
+	const c = config[priority];
+	if (!c) return null;
+	
+	return (
+		<span 
+			className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium"
+			style={{ backgroundColor: c.bg, color: c.text }}
+		>
+			<span className="text-[8px]">{c.icon}</span>
+			{priority.charAt(0).toUpperCase() + priority.slice(1)}
 		</span>
 	);
 }
@@ -247,13 +261,13 @@ function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 	
 	// Linear exact colors
 	const colors: Record<string, string> = {
-		todo: "#666666",
+		todo: "#6b6b6b",
 		"in-progress": "#f5a623",
-		blocked: "#ef4444",
-		done: "#22c55e",
-		backlog: "#555555",
+		blocked: "#e5484d",
+		done: "#30a46c",
+		backlog: "#505050",
 	};
-	const color = colors[status] || "#666666";
+	const color = colors[status] || "#6b6b6b";
 	
 	switch (status) {
 		case "todo":
@@ -265,7 +279,7 @@ function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 		case "in-progress":
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
+					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} opacity="0.4" />
 					<path d="M8 2.5 A5.5 5.5 0 0 1 13.5 8" stroke={color} strokeWidth={sw} strokeLinecap="round" />
 				</svg>
 			);
@@ -273,14 +287,14 @@ function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
 					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
-					<path d="M6 6l4 4M10 6l-4 4" stroke={color} strokeWidth={sw} strokeLinecap="round" />
+					<path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke={color} strokeWidth={sw} strokeLinecap="round" />
 				</svg>
 			);
 		case "done":
 			return (
 				<svg width={s} height={s} viewBox="0 0 16 16" fill="none">
-					<circle cx="8" cy="8" r="5.5" stroke={color} strokeWidth={sw} />
-					<path d="M5.5 8l1.5 1.5 3.5-3.5" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+					<circle cx="8" cy="8" r="5.5" fill={color} />
+					<path d="M5.5 8l1.5 1.5 3.5-3.5" stroke="#0a0a0a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
 				</svg>
 			);
 		case "backlog":
@@ -298,15 +312,21 @@ function StatusIcon({ status, size = 14 }: { status: string; size?: number }) {
 	}
 }
 
-function AssigneeIcon({ assignee }: { assignee: string }) {
+function AssigneeAvatar({ assignee }: { assignee: string }) {
 	const emojis: Record<string, string> = {
 		main: "🧠", builder: "🔨", trader: "📈", watcher: "👁️",
 		director: "🎬", analyst: "📊", "job-hunt": "💼", clawink: "✍️", kat: "🐱",
 	};
 	
+	// Generate consistent color from assignee name
+	const colors = ["#5e6ad2", "#e5484d", "#30a46c", "#f5a623", "#0091ff", "#9b8afb"];
+	const colorIndex = assignee.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+	const bgColor = colors[colorIndex];
+	
 	return (
 		<div 
-			className="w-5 h-5 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[9px]"
+			className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+			style={{ backgroundColor: `${bgColor}20` }}
 			title={assignee}
 		>
 			{emojis[assignee] || assignee.charAt(0).toUpperCase()}
@@ -314,41 +334,20 @@ function AssigneeIcon({ assignee }: { assignee: string }) {
 	);
 }
 
-function DateBadge({ date }: { date: string }) {
-	const d = new Date(date);
-	const formatted = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
-	
-	return (
-		<span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#1e1e1e] rounded text-[10px] text-[#666]">
-			<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2">
-				<rect x="2" y="3" width="12" height="11" rx="1" />
-				<path d="M5 1v3M11 1v3M2 7h12" />
-			</svg>
-			{formatted}
-		</span>
-	);
-}
-
 function DotsIcon() {
 	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="#555">
-			<circle cx="3" cy="8" r="1" />
-			<circle cx="8" cy="8" r="1" />
-			<circle cx="13" cy="8" r="1" />
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="var(--text-muted)">
+			<circle cx="3" cy="8" r="1.2" />
+			<circle cx="8" cy="8" r="1.2" />
+			<circle cx="13" cy="8" r="1.2" />
 		</svg>
 	);
 }
 
 function PlusIcon() {
 	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#555" strokeWidth="1.5">
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
 			<path d="M8 4v8M4 8h8" />
 		</svg>
 	);
-}
-
-function formatCreatedDate(dateStr?: string): string {
-	if (!dateStr) return "recently";
-	const d = new Date(dateStr);
-	return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }

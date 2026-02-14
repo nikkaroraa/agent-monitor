@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../../convex/_generated/api";
 
 const OPENCLAW_BASE = process.env.OPENCLAW_BASE || path.join(process.env.HOME || "", ".openclaw");
 
@@ -118,6 +120,33 @@ export async function GET(
 		todo: tasks.filter(t => t.status === "todo" || t.status === "backlog").length,
 	};
 
+	// Fetch stats from Convex if available
+	let stats = null;
+	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+	if (convexUrl) {
+		try {
+			const client = new ConvexHttpClient(convexUrl);
+			const dailyStats = await client.query(api.agentStats.getAgentStats, {
+				agentId,
+				days: 30,
+			});
+
+			const totals = dailyStats.reduce(
+				(acc, s) => ({
+					tasksCompleted: acc.tasksCompleted + s.tasksCompleted,
+					tasksStarted: acc.tasksStarted + s.tasksStarted,
+					messagesCount: acc.messagesCount + s.messagesCount,
+					activeMinutes: acc.activeMinutes + s.activeMinutes,
+				}),
+				{ tasksCompleted: 0, tasksStarted: 0, messagesCount: 0, activeMinutes: 0 }
+			);
+
+			stats = { totals, daily: dailyStats };
+		} catch (error) {
+			console.error("Error fetching stats:", error);
+		}
+	}
+
 	return NextResponse.json({
 		id: agentId,
 		name: agentId.charAt(0).toUpperCase() + agentId.slice(1).replace(/-/g, " "),
@@ -137,5 +166,6 @@ export async function GET(
 			agents: agentsMd,
 			memory: memoryMd ? memoryMd.slice(0, 2000) : null, // Truncate memory
 		},
+		stats,
 	});
 }

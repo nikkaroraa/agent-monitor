@@ -6,6 +6,10 @@ export interface Agent {
 	status: "active" | "idle" | "error";
 	lastActivity?: string;
 	currentTask?: string;
+	weeklyStats?: {
+		tasksCompleted: number;
+		tasksStarted: number;
+	};
 }
 
 export interface Project {

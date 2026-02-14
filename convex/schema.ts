@@ -18,6 +18,18 @@ export default defineSchema({
 		),
 	}).index("by_agentId", ["agentId"]),
 
+	// Daily work stats per agent
+	agentStats: defineTable({
+		agentId: v.string(),
+		date: v.string(), // YYYY-MM-DD format
+		tasksCompleted: v.number(),
+		tasksStarted: v.number(),
+		messagesCount: v.number(),
+		activeMinutes: v.number(),
+	})
+		.index("by_agentId", ["agentId"])
+		.index("by_agentId_date", ["agentId", "date"]),
+
 	projects: defineTable({
 		projectId: v.string(),
 		name: v.string(),

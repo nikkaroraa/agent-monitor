@@ -168,6 +168,78 @@ async function getProjectsFromDisk(): Promise<Array<{
 	}
 }
 
+// Calculate daily stats from tasks
+function calculateAgentStats(
+	tasks: Array<{
+		assignee: string;
+		status: string;
+		claimedAt?: number;
+		completedAt?: number;
+	}>
+): Array<{
+	agentId: string;
+	date: string;
+	tasksCompleted: number;
+	tasksStarted: number;
+	messagesCount: number;
+	activeMinutes: number;
+}> {
+	// Group by agent and date
+	const statsMap: Record<
+		string,
+		Record<
+			string,
+			{ tasksCompleted: number; tasksStarted: number }
+		>
+	> = {};
+
+	for (const task of tasks) {
+		const agentId = task.assignee;
+		if (!agentId) continue;
+
+		// Track completions
+		if (task.completedAt && task.status === "done") {
+			const date = new Date(task.completedAt).toISOString().split("T")[0];
+			if (!statsMap[agentId]) statsMap[agentId] = {};
+			if (!statsMap[agentId][date]) statsMap[agentId][date] = { tasksCompleted: 0, tasksStarted: 0 };
+			statsMap[agentId][date].tasksCompleted++;
+		}
+
+		// Track starts
+		if (task.claimedAt) {
+			const date = new Date(task.claimedAt).toISOString().split("T")[0];
+			if (!statsMap[agentId]) statsMap[agentId] = {};
+			if (!statsMap[agentId][date]) statsMap[agentId][date] = { tasksCompleted: 0, tasksStarted: 0 };
+			statsMap[agentId][date].tasksStarted++;
+		}
+	}
+
+	// Flatten to array
+	const stats: Array<{
+		agentId: string;
+		date: string;
+		tasksCompleted: number;
+		tasksStarted: number;
+		messagesCount: number;
+		activeMinutes: number;
+	}> = [];
+
+	for (const [agentId, dates] of Object.entries(statsMap)) {
+		for (const [date, data] of Object.entries(dates)) {
+			stats.push({
+				agentId,
+				date,
+				tasksCompleted: data.tasksCompleted,
+				tasksStarted: data.tasksStarted,
+				messagesCount: 0, // TODO: Could be populated from session data
+				activeMinutes: 0, // TODO: Could be calculated from session timestamps
+			});
+		}
+	}
+
+	return stats;
+}
+
 export async function POST() {
 	const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 	
@@ -198,11 +270,22 @@ export async function POST() {
 			});
 		}
 
+		// Calculate and sync agent stats
+		const agentStats = calculateAgentStats(tasks);
+		let statsResult = { synced: 0 };
+		if (agentStats.length > 0) {
+			await client.mutation(api.agentStats.syncStatsFromTasks, {
+				stats: agentStats,
+			});
+			statsResult = { synced: agentStats.length };
+		}
+
 		return NextResponse.json({
 			success: true,
 			synced: {
 				...syncResult,
 				projects: projectsResult.synced,
+				stats: statsResult.synced,
 			},
 		});
 	} catch (error) {

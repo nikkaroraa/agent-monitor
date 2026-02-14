@@ -3,6 +3,14 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
+interface DailyStat {
+	date: string;
+	tasksCompleted: number;
+	tasksStarted: number;
+	messagesCount: number;
+	activeMinutes: number;
+}
+
 interface AgentDetail {
 	id: string;
 	name: string;
@@ -27,6 +35,15 @@ interface AgentDetail {
 		agents: string | null;
 		memory: string | null;
 	};
+	stats?: {
+		totals: {
+			tasksCompleted: number;
+			tasksStarted: number;
+			messagesCount: number;
+			activeMinutes: number;
+		};
+		daily: DailyStat[];
+	};
 }
 
 interface AgentDetailPanelProps {
@@ -34,12 +51,12 @@ interface AgentDetailPanelProps {
 	onClose: () => void;
 }
 
-type TabId = "soul" | "identity" | "memory" | "tasks";
+type TabId = "stats" | "soul" | "identity" | "memory" | "tasks";
 
 export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 	const [agent, setAgent] = useState<AgentDetail | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState<TabId>("soul");
+	const [activeTab, setActiveTab] = useState<TabId>("stats");
 
 	useEffect(() => {
 		async function fetchAgent() {
@@ -96,6 +113,7 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 	}
 
 	const tabs: { id: TabId; label: string; count?: number }[] = [
+		{ id: "stats", label: "Stats", count: agent.stats?.totals.tasksCompleted },
 		{ id: "soul", label: "Soul" },
 		{ id: "identity", label: "Identity" },
 		{ id: "memory", label: "Memory" },
@@ -172,6 +190,65 @@ export function AgentDetailPanel({ agentId, onClose }: AgentDetailPanelProps) {
 
 				{/* Content */}
 				<div className="flex-1 overflow-y-auto">
+					{activeTab === "stats" && (
+						<div className="p-5 space-y-5">
+							{/* Summary cards */}
+							<div className="grid grid-cols-2 gap-3">
+								<StatCard 
+									label="Tasks Completed (30d)" 
+									value={agent.stats?.totals.tasksCompleted ?? 0} 
+									color="#4ade80" 
+								/>
+								<StatCard 
+									label="Tasks Started (30d)" 
+									value={agent.stats?.totals.tasksStarted ?? 0} 
+									color="#f5a524" 
+								/>
+							</div>
+
+							{/* Activity chart */}
+							{agent.stats?.daily && agent.stats.daily.length > 0 ? (
+								<div className="space-y-3">
+									<h3 className="text-[11px] text-[#555] uppercase tracking-wider font-medium">
+										Daily Activity (Last 30 days)
+									</h3>
+									<ActivityChart daily={agent.stats.daily} />
+								</div>
+							) : (
+								<EmptyState icon="📊" message="No activity data yet" />
+							)}
+
+							{/* Weekly summary */}
+							{agent.stats?.daily && agent.stats.daily.length > 0 && (
+								<div className="space-y-3">
+									<h3 className="text-[11px] text-[#555] uppercase tracking-wider font-medium">
+										Recent Days
+									</h3>
+									<div className="space-y-1">
+										{agent.stats.daily.slice(-7).reverse().map((day) => (
+											<div
+												key={day.date}
+												className="flex items-center justify-between p-3 bg-[#121212] rounded-md border border-[#262626]"
+											>
+												<span className="text-[13px] text-[#888]">
+													{formatDate(day.date)}
+												</span>
+												<div className="flex items-center gap-4">
+													<span className="text-[12px] text-green-400">
+														✓ {day.tasksCompleted}
+													</span>
+													<span className="text-[12px] text-yellow-400">
+														→ {day.tasksStarted}
+													</span>
+												</div>
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
+
 					{activeTab === "soul" && (
 						<div className="p-5">
 							{agent.content.soul ? (
@@ -437,6 +514,74 @@ function formatRelativeTime(isoString: string): string {
 	const diffHours = Math.floor(diffMins / 60);
 	if (diffHours < 24) return `${diffHours}h ago`;
 	return `${Math.floor(diffHours / 24)}d ago`;
+}
+
+function formatDate(dateStr: string): string {
+	const date = new Date(dateStr);
+	const today = new Date();
+	const yesterday = new Date(today);
+	yesterday.setDate(yesterday.getDate() - 1);
+
+	if (dateStr === today.toISOString().split("T")[0]) {
+		return "Today";
+	}
+	if (dateStr === yesterday.toISOString().split("T")[0]) {
+		return "Yesterday";
+	}
+	return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
+// Simple bar chart for daily activity
+function ActivityChart({ daily }: { daily: Array<{ date: string; tasksCompleted: number; tasksStarted: number }> }) {
+	// Get last 14 days for display
+	const recentDays = daily.slice(-14);
+	const maxValue = Math.max(...recentDays.map(d => Math.max(d.tasksCompleted, d.tasksStarted)), 1);
+
+	return (
+		<div className="bg-[#121212] rounded-md border border-[#262626] p-4">
+			<div className="flex items-end gap-1 h-24">
+				{recentDays.map((day) => {
+					const completedHeight = (day.tasksCompleted / maxValue) * 100;
+					const startedHeight = (day.tasksStarted / maxValue) * 100;
+
+					return (
+						<div key={day.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+							{/* Tooltip */}
+							<div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
+								<div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded px-2 py-1 text-[10px] whitespace-nowrap">
+									<div className="text-[#888]">{formatDate(day.date)}</div>
+									<div className="text-green-400">✓ {day.tasksCompleted} completed</div>
+									<div className="text-yellow-400">→ {day.tasksStarted} started</div>
+								</div>
+							</div>
+							{/* Bar */}
+							<div className="w-full flex flex-col items-center gap-0.5">
+								<div
+									className="w-full bg-green-500/30 rounded-t transition-all hover:bg-green-500/50"
+									style={{ height: `${completedHeight}%`, minHeight: day.tasksCompleted > 0 ? "4px" : "0" }}
+								/>
+								<div
+									className="w-full bg-yellow-500/30 rounded-b transition-all hover:bg-yellow-500/50"
+									style={{ height: `${startedHeight}%`, minHeight: day.tasksStarted > 0 ? "4px" : "0" }}
+								/>
+							</div>
+						</div>
+					);
+				})}
+			</div>
+			{/* Legend */}
+			<div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-[#262626]">
+				<div className="flex items-center gap-1.5 text-[10px] text-[#666]">
+					<span className="w-2 h-2 bg-green-500/50 rounded" />
+					<span>Completed</span>
+				</div>
+				<div className="flex items-center gap-1.5 text-[10px] text-[#666]">
+					<span className="w-2 h-2 bg-yellow-500/50 rounded" />
+					<span>Started</span>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 function LoadingSpinner() {

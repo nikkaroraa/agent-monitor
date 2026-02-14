@@ -91,6 +91,7 @@ export function Dashboard() {
 					status: a.status,
 					lastActivity: a.lastActivity,
 					currentTask: a.currentTask,
+					weeklyStats: a.weeklyStats,
 				})),
 				tasks: convexData.tasks.map((t) => ({
 					id: t.id,

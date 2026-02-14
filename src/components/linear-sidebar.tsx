@@ -229,6 +229,7 @@ function AgentNavItem({
 	onViewDetails: () => void;
 }) {
 	const [showMenu, setShowMenu] = useState(false);
+	const tasksThisWeek = agent.weeklyStats?.tasksCompleted ?? 0;
 
 	return (
 		<div className="relative group">
@@ -248,6 +249,11 @@ function AgentNavItem({
 			>
 				<span className="text-sm">{agent.emoji}</span>
 				<span className="flex-1 text-left truncate">{agent.name}</span>
+				{tasksThisWeek > 0 && (
+					<span className="px-1.5 py-0.5 text-[10px] font-medium bg-green-500/20 text-green-400 rounded">
+						{tasksThisWeek}
+					</span>
+				)}
 				<span className={cn(
 					"w-1.5 h-1.5 rounded-full",
 					agent.status === "active" && "bg-green-500",

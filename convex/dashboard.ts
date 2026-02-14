@@ -4,13 +4,30 @@ import { query } from "./_generated/server";
 export const getData = query({
 	args: {},
 	handler: async (ctx) => {
-		const [agents, tasks, sessions, projects, syncStates] = await Promise.all([
+		const [agents, tasks, sessions, projects, syncStates, agentStats] = await Promise.all([
 			ctx.db.query("agents").collect(),
 			ctx.db.query("tasks").order("desc").collect(),
 			ctx.db.query("sessions").collect(),
 			ctx.db.query("projects").collect(),
 			ctx.db.query("syncState").collect(),
+			ctx.db.query("agentStats").collect(),
 		]);
+
+		// Calculate 7-day stats per agent
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+		const cutoffStr = sevenDaysAgo.toISOString().split("T")[0];
+
+		const recentStats = agentStats.filter((s) => s.date >= cutoffStr);
+		const statsByAgent: Record<string, { tasksCompleted: number; tasksStarted: number }> = {};
+
+		for (const stat of recentStats) {
+			if (!statsByAgent[stat.agentId]) {
+				statsByAgent[stat.agentId] = { tasksCompleted: 0, tasksStarted: 0 };
+			}
+			statsByAgent[stat.agentId].tasksCompleted += stat.tasksCompleted;
+			statsByAgent[stat.agentId].tasksStarted += stat.tasksStarted;
+		}
 
 		// Transform to match dashboard format
 		const transformedAgents = agents.map((a) => ({
@@ -20,6 +37,7 @@ export const getData = query({
 			status: a.status,
 			lastActivity: a.lastActivity ? new Date(a.lastActivity).toISOString() : undefined,
 			currentTask: a.currentTask,
+			weeklyStats: statsByAgent[a.agentId] || { tasksCompleted: 0, tasksStarted: 0 },
 		}));
 
 		const transformedTasks = tasks.map((t) => ({
